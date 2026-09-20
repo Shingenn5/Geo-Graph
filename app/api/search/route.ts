@@ -1,0 +1,5 @@
+export async function GET(request: Request) {
+ const q=new URL(request.url).searchParams.get("q")?.trim();if(!q||q.length>200)return Response.json({error:"Invalid search"},{status:400});
+ try{const response=await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=5`,{signal:AbortSignal.timeout(10000)});if(!response.ok)throw new Error("Search failed");const data=await response.json() as {features?:{properties:Record<string,string>;geometry:{coordinates:number[]}}[]};if(!Array.isArray(data.features))throw new Error("Invalid response");return Response.json(data.features.filter((f:{geometry?:{coordinates?:number[]}})=>f.geometry?.coordinates?.length===2).map((f:{properties:Record<string,string>;geometry:{coordinates:number[]}})=>({name:[f.properties.name,f.properties.city,f.properties.state,f.properties.country].filter((v,i,a)=>v&&a.indexOf(v)===i).join(", "),point:f.geometry.coordinates})),{headers:{"Cache-Control":"public, max-age=300"}});}catch{return Response.json({error:"Search unavailable"},{status:502});}
+}
+
