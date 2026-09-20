@@ -21,10 +21,10 @@ export default function Home(){
  }
  useEffect(()=>{
   let disposed=false;
-  import("maplibre-gl").then(({Map,NavigationControl,ScaleControl,AttributionControl})=>{
+  import("maplibre-gl").then(({Map,NavigationControl,ScaleControl,AttributionControl,setWorkerUrl})=>{
    if(disposed||!container.current)return;
    try{
-    const m=new Map({container:container.current,center:start,zoom:11.8,pitch:58,bearing:-22,maxZoom:17,attributionControl:false,style:{version:8,sources:{
+    setWorkerUrl(`${window.location.origin}/maplibre/maplibre-gl-worker.mjs`);const m=new Map({container:container.current,center:start,zoom:11.8,pitch:58,bearing:-22,maxZoom:17,attributionControl:false,style:{version:8,sources:{
      satellite:{type:"raster",tiles:["https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"],tileSize:256,maxzoom:19,attribution:"Imagery © Esri, Maxar, Earthstar Geographics, and the GIS User Community"},
      topo:{type:"raster",tiles:["https://basemap.nationalmap.gov/arcgis/rest/services/USGSTopo/MapServer/tile/{z}/{y}/{x}"],tileSize:256,maxzoom:16,attribution:"Topography: USGS (United States)"},
      elevation:{type:"raster-dem",tiles:["https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png"],encoding:"terrarium",tileSize:256,maxzoom:15,attribution:'Elevation: <a href="https://github.com/tilezen/joerd/blob/master/docs/attribution.md">Mapzen / source credits</a>'},
@@ -60,6 +60,7 @@ export default function Home(){
   <section className="coverage"><strong>About these layers</strong><p>Geology comes from published maps, not an inference from satellite images. Coverage and detail vary. Colors follow the source cartography. Surface maps do not establish rock depth or thickness.</p><p>Underground cutaways are planned for a later version with depth data.</p><a href="https://tiles.macrostrat.org/" target="_blank" rel="noreferrer">Macrostrat & original map authors ↗</a><p>Place search: Photon / OpenStreetMap contributors.</p></section>
  </aside><div className="map-shell"><div ref={container} className="map" aria-label="Interactive 3D terrain map"/>{!ready&&!mapError&&<div className="map-message" role="status">Loading the terrain…</div>}{mapError&&<div className="map-message error" role="alert">{mapError}<button onClick={()=>setMapError("")} aria-label="Dismiss map warning">×</button></div>}<div className="map-caption"><span>{terrain?"3D TERRAIN":"2D MAP"}</span><strong>{base==="satellite"?"Satellite":"Topographic"}{geology?" + geology":""}{faults?" + faults":""}</strong></div><div className="map-help">Drag to explore · Right-drag to tilt · Click to inspect</div></div></div></main>;
 }
+
 
 
 

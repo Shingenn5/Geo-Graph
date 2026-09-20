@@ -1,3 +1,4 @@
+import "./sync-map-worker.mjs";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { readExecutionProfile } from "./execution-profile.mjs";
@@ -21,3 +22,4 @@ const cli = new URL(managedLinux
 process.argv = [process.execPath, fileURLToPath(cli), command,
   ...(!managedLinux && command === "dev" ? ["--port", "5173"] : []), ...args];
 await import(cli.href);
+
