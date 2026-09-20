@@ -13,6 +13,7 @@ Install with `npm ci`, then run `npm run dev`. Build with `npm run build`.
 - Mapzen Terrarium elevation tiles with explicit Terrarium decoding and a fixed, restrained relief scale.
 - OpenFreeMap vector buildings from OpenStreetMap, extruded from mapped heights at city scale.
 - USDA NRCS Soil Data Access / SSURGO point lookups for map units, dominant components, representative surface horizons, drainage, hydrologic group, texture fractions, organic matter, and pH where published.
+- Self-contained soil survey report export with a print/save-as-PDF layout and source notes.
 - Macrostrat cartographic surface geology with click-through original survey references.
 - USGS Quaternary faults (U.S. coverage; not a complete inventory of every fault).
 - Photon / OpenStreetMap for submitted location searches; coordinate input also works.
