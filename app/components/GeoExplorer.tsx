@@ -130,10 +130,15 @@ export default function GeoExplorer(){
   useEffect(()=>{const m=map.current;if(!m||!ready)return;m.setLayoutProperty("satellite","visibility",base==="satellite"?"visible":"none");m.setLayoutProperty("topo","visibility",base==="topo"?"visible":"none");m.setLayoutProperty("terrain-shade","visibility",hillshade?"visible":"none");m.setLayoutProperty("geology","visibility",geology?"visible":"none");m.setLayoutProperty("faults","visibility",faults?"visible":"none");m.setLayoutProperty("country-border-casing","visibility",borders?"visible":"none");m.setLayoutProperty("country-borders","visibility",borders?"visible":"none");m.setLayoutProperty("3d-buildings","visibility","none");m.setTerrain(hillshade?{source:"terrain",exaggeration:1.35}:null);m.setCenterClampedToGround(true);},[ready,base,hillshade,geology,faults,borders]);
 
   function goToView(view:typeof VIEWS[number]){
-    const m=map.current;if(!m)return;terrainRevealDone.current=view.zoom>=9;setSceneLoading(true);m.setProjection({type:view.zoom<5?"globe":"mercator"});
-    m.setLayoutProperty("3d-buildings","visibility","none");
-    m.setLayoutProperty("terrain-shade","visibility","visible");m.setTerrain({source:"terrain",exaggeration:1.35});setHillshade(true);
-    m.setCenterClampedToGround(true);m.flyTo({center:view.point,zoom:view.zoom,pitch:Math.min(view.pitch,60),bearing:view.bearing,duration:2200,essential:true});setPlaces([]);if(view.zoom>8)void inspectGround(view.point[0],view.point[1]);else{(m.getSource("selection") as GeoJSONSource|undefined)?.setData({type:"FeatureCollection",features:[]});setPoint(null);setResult(null);setSoil(null);setBuilding(null);}
+    const m=map.current;if(!m)return;const terrainView=view.zoom>=5;terrainRevealDone.current=view.zoom>=9;setSceneLoading(true);
+    m.setLayoutProperty("3d-buildings","visibility","none");m.setCenterClampedToGround(true);
+    if(terrainView){
+      m.setTerrain(null);m.setProjection({type:"mercator"});m.jumpTo({center:view.point,zoom:Math.min(view.zoom,8),pitch:0,bearing:view.bearing});
+      requestAnimationFrame(()=>{if(map.current!==m)return;m.setLayoutProperty("terrain-shade","visibility","visible");m.setTerrain({source:"terrain",exaggeration:1.35});setHillshade(true);m.easeTo({center:view.point,zoom:view.zoom,pitch:Math.min(view.pitch,60),bearing:view.bearing,duration:1600,essential:true});});
+    }else{
+      m.setProjection({type:"globe"});m.setLayoutProperty("terrain-shade","visibility","visible");m.setTerrain({source:"terrain",exaggeration:1.35});setHillshade(true);m.easeTo({center:view.point,zoom:view.zoom,pitch:0,bearing:0,duration:1200,essential:true});
+    }
+    setPlaces([]);if(view.zoom>8)void inspectGround(view.point[0],view.point[1]);else{(m.getSource("selection") as GeoJSONSource|undefined)?.setData({type:"FeatureCollection",features:[]});setPoint(null);setResult(null);setSoil(null);setBuilding(null);}
   }
   function closeTerrain(){const m=map.current;if(!m)return;terrainRevealDone.current=true;setSceneLoading(true);m.setCenterClampedToGround(true);m.easeTo({zoom:Math.max(m.getZoom(),13),pitch:56,bearing:m.getBearing()||-24,duration:1200});}
   function selectCenter(){const center=map.current?.getCenter().wrap();if(center)void inspectGround(center.lng,center.lat);}
