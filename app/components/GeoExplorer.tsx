@@ -130,17 +130,17 @@ export default function GeoExplorer(){
   useEffect(()=>{const m=map.current;if(!m||!ready)return;m.setLayoutProperty("satellite","visibility",base==="satellite"?"visible":"none");m.setLayoutProperty("topo","visibility",base==="topo"?"visible":"none");m.setLayoutProperty("terrain-shade","visibility",hillshade?"visible":"none");m.setLayoutProperty("geology","visibility",geology?"visible":"none");m.setLayoutProperty("faults","visibility",faults?"visible":"none");m.setLayoutProperty("country-border-casing","visibility",borders?"visible":"none");m.setLayoutProperty("country-borders","visibility",borders?"visible":"none");m.setLayoutProperty("3d-buildings","visibility","none");m.setTerrain(hillshade?{source:"terrain",exaggeration:1.35}:null);m.setCenterClampedToGround(true);},[ready,base,hillshade,geology,faults,borders]);
 
   function goToView(view:typeof VIEWS[number]){
-    const m=map.current;if(!m)return;const terrainView=view.zoom>=5;terrainRevealDone.current=view.zoom>=9;setSceneLoading(true);
+    const m=map.current;if(!m)return;const targetZoom=Math.min(view.zoom,10.5),terrainView=targetZoom>=5;terrainRevealDone.current=targetZoom>=9;setSceneLoading(true);
     m.setLayoutProperty("3d-buildings","visibility","none");m.setCenterClampedToGround(true);
     if(terrainView){
-      m.stop();m.setTerrain(null);m.jumpTo({center:view.point,zoom:view.zoom,pitch:Math.min(view.pitch,60),bearing:view.bearing});
+      m.stop();m.setTerrain(null);m.jumpTo({center:view.point,zoom:targetZoom,pitch:Math.min(view.pitch,55),bearing:view.bearing});
       requestAnimationFrame(()=>{if(map.current!==m)return;m.setLayoutProperty("terrain-shade","visibility","visible");m.setTerrain({source:"terrain",exaggeration:1.35});setHillshade(true);});
     }else{
-      m.stop();m.jumpTo({center:view.point,zoom:view.zoom,pitch:0,bearing:0});m.setLayoutProperty("terrain-shade","visibility","visible");m.setTerrain({source:"terrain",exaggeration:1.35});setHillshade(true);
+      m.stop();m.jumpTo({center:view.point,zoom:targetZoom,pitch:0,bearing:0});m.setLayoutProperty("terrain-shade","visibility","visible");m.setTerrain({source:"terrain",exaggeration:1.35});setHillshade(true);
     }
     setPlaces([]);if(view.zoom>8)void inspectGround(view.point[0],view.point[1]);else{(m.getSource("selection") as GeoJSONSource|undefined)?.setData({type:"FeatureCollection",features:[]});setPoint(null);setResult(null);setSoil(null);setBuilding(null);}
   }
-  function closeTerrain(){const m=map.current;if(!m)return;terrainRevealDone.current=true;setSceneLoading(true);m.setCenterClampedToGround(true);m.easeTo({zoom:Math.max(m.getZoom(),13),pitch:56,bearing:m.getBearing()||-24,duration:1200});}
+  function closeTerrain(){const m=map.current;if(!m)return;terrainRevealDone.current=true;setSceneLoading(true);m.setCenterClampedToGround(true);m.easeTo({zoom:Math.max(m.getZoom(),10.5),pitch:55,bearing:m.getBearing()||-24,duration:900});}
   function selectCenter(){const center=map.current?.getCenter().wrap();if(center)void inspectGround(center.lng,center.lat);}
   function returnToSelection(){const m=map.current;if(!m||!point)return;m.setCenterClampedToGround(true);m.easeTo({center:point,duration:900,essential:true});}
   async function search(event:React.FormEvent){event.preventDefault();if(!query.trim())return;setSearchError("");setPlaces([]);const coords=query.trim().match(/^(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)$/);if(coords){const lat=Number(coords[1]),lng=Number(coords[2]);if(Math.abs(lat)>85||Math.abs(lng)>180){setSearchError("Use latitude −85 to 85 and longitude −180 to 180.");return;}goToView({name:"Coordinates",icon:"",point:[lng,lat],zoom:16.3,pitch:58,bearing:-22});return;}setSearching(true);try{const response=await fetch(`/api/search?q=${encodeURIComponent(query.trim())}`);if(!response.ok)throw new Error("Place search is unavailable. Enter latitude, longitude instead.");const data=await response.json() as Place[];setPlaces(data);if(!data.length)setSearchError("No places found. Try a nearby city or latitude, longitude.");}catch(cause){setSearchError(cause instanceof Error?cause.message:"Search failed.");}finally{setSearching(false);}}
