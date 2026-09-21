@@ -12,8 +12,9 @@ Install with `npm ci`, then run `npm run dev`. Build with `npm run build`.
 - USGS topographic basemap (United States).
 - Mapzen Terrarium elevation tiles with explicit Terrarium decoding and a fixed, restrained relief scale.
 - OpenFreeMap vector buildings from OpenStreetMap, extruded from mapped heights at city scale.
-- USDA NRCS Soil Data Access / SSURGO point lookups for map units, dominant components, representative surface horizons, drainage, hydrologic group, texture fractions, organic matter, and pH where published.
-- Self-contained soil survey report export with a print/save-as-PDF layout and source notes.
+- USDA NRCS Soil Data Access / SSURGO point lookups for map units, dominant components, every published horizon, texture fractions, water capacity, hydraulic conductivity, hydric/runoff context, restrictive layers, corrosion classes, and related physical properties.
+- Dashboard views for overview, agriculture, water, construction, and environmental screening. These organize published observations without turning them into unsupported suitability scores.
+- Self-contained soil survey report export with the full dominant-component horizon profile, a print/save-as-PDF layout, and interpretation boundaries.
 - Macrostrat cartographic surface geology with click-through original survey references.
 - USGS Quaternary faults (U.S. coverage; not a complete inventory of every fault).
 - Photon / OpenStreetMap for submitted location searches; coordinate input also works.
