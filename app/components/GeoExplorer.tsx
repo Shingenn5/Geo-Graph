@@ -138,7 +138,7 @@ export default function GeoExplorer(){
     }else{
       m.stop();m.jumpTo({center:view.point,zoom:targetZoom,pitch:0,bearing:0});m.setLayoutProperty("terrain-shade","visibility","visible");m.setTerrain({source:"terrain",exaggeration:1.35});setHillshade(true);
     }
-    setPlaces([]);if(view.zoom>8)void inspectGround(view.point[0],view.point[1]);else{(m.getSource("selection") as GeoJSONSource|undefined)?.setData({type:"FeatureCollection",features:[]});setPoint(null);setResult(null);setSoil(null);setBuilding(null);}
+    setPlaces([]);request.current?.abort();(m.getSource("selection") as GeoJSONSource|undefined)?.setData({type:"FeatureCollection",features:[]});setPoint(null);setResult(null);setSoil(null);setBuilding(null);
   }
   function closeTerrain(){const m=map.current;if(!m)return;terrainRevealDone.current=true;setSceneLoading(true);m.setCenterClampedToGround(true);m.easeTo({zoom:Math.max(m.getZoom(),10.5),pitch:55,bearing:m.getBearing()||-24,duration:900});}
   function selectCenter(){const center=map.current?.getCenter().wrap();if(center)void inspectGround(center.lng,center.lat);}
