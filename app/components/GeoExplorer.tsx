@@ -133,8 +133,8 @@ export default function GeoExplorer(){
     const m=map.current;if(!m)return;const targetZoom=Math.min(view.zoom,10.5),terrainView=targetZoom>=5;terrainRevealDone.current=targetZoom>=9;setSceneLoading(true);
     m.setLayoutProperty("3d-buildings","visibility","none");m.setCenterClampedToGround(true);
     if(terrainView){
-      m.stop();m.setTerrain(null);m.jumpTo({center:view.point,zoom:targetZoom,pitch:Math.min(view.pitch,55),bearing:view.bearing});
-      requestAnimationFrame(()=>{if(map.current!==m)return;m.setLayoutProperty("terrain-shade","visibility","visible");m.setTerrain({source:"terrain",exaggeration:1.35});setHillshade(true);});
+      m.stop();m.setTerrain(null);m.setCenter(view.point);m.setPitch(0);m.setBearing(view.bearing);
+      requestAnimationFrame(()=>{if(map.current!==m)return;m.easeTo({zoom:5.5,duration:500,essential:true});m.once("moveend",()=>{if(map.current!==m)return;m.easeTo({zoom:targetZoom,pitch:Math.min(view.pitch,55),bearing:view.bearing,duration:1100,essential:true});m.once("moveend",()=>{if(map.current!==m)return;m.setLayoutProperty("terrain-shade","visibility","visible");m.setTerrain({source:"terrain",exaggeration:1.35});setHillshade(true);});});});
     }else{
       m.stop();m.jumpTo({center:view.point,zoom:targetZoom,pitch:0,bearing:0});m.setLayoutProperty("terrain-shade","visibility","visible");m.setTerrain({source:"terrain",exaggeration:1.35});setHillshade(true);
     }
