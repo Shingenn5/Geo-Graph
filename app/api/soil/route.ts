@@ -81,10 +81,13 @@ ORDER BY hz.hzdept_r, hz.hzdepb_r`;
       electricalConductivity: numberOrNull(item.ec_r),
     }));
     const surface = horizons[0] ?? null;
-    const profileAvailableWaterStorageMm = horizons.reduce((total, horizon) => {
-      if (horizon.topCm == null || horizon.bottomCm == null || horizon.availableWaterCapacity == null) return total;
-      return total + (horizon.bottomCm - horizon.topCm) * horizon.availableWaterCapacity * 10;
-    }, 0);
+    // Do not present missing or partial profile measurements as a measured zero.
+    const completeWaterProfile = horizons.length > 0 && horizons.every(horizon =>
+      horizon.topCm != null && horizon.bottomCm != null && horizon.bottomCm > horizon.topCm && horizon.availableWaterCapacity != null
+    );
+    const profileAvailableWaterStorageMm = completeWaterProfile
+      ? horizons.reduce((total, horizon) => total + (horizon.bottomCm! - horizon.topCm!) * horizon.availableWaterCapacity! * 10, 0)
+      : null;
     return Response.json({
       soil: {
         mapUnitKey: row.mukey, mapUnitSymbol: row.musym, mapUnitName: row.muname,
@@ -100,7 +103,7 @@ ORDER BY hz.hzdept_r, hz.hzdepb_r`;
         concreteCorrosion: row.corcon, steelCorrosion: row.corsteel, frostAction: row.frostact,
         nonIrrigatedCapabilityClass: row.nirrcapcl, irrigatedCapabilityClass: row.irrcapcl,
         restrictionKind: row.restrictionkind, restrictionDepthCm: numberOrNull(row.restrictiondepthcm),
-        profileAvailableWaterStorageMm: Math.round(profileAvailableWaterStorageMm * 10) / 10,
+        profileAvailableWaterStorageMm: profileAvailableWaterStorageMm == null ? null : Math.round(profileAvailableWaterStorageMm * 10) / 10,
         horizonName: surface?.name ?? null, horizonTopCm: surface?.topCm ?? null, horizonBottomCm: surface?.bottomCm ?? null,
         texture: surface?.texture ?? null, sandPercent: surface?.sandPercent ?? null, siltPercent: surface?.siltPercent ?? null,
         clayPercent: surface?.clayPercent ?? null, organicMatterPercent: surface?.organicMatterPercent ?? null,
