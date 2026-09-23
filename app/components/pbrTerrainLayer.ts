@@ -8,7 +8,15 @@ type StudyLayer = CustomLayerInterface & { refresh: () => void };
 
 const PATCH_SIZE_METERS = 1_000;
 const PATCH_SEGMENTS = 64;
-const MATERIAL_WIDTH_METERS = 3;
+const GROUND_TILE_METERS = 12;
+const ROCK_TILE_METERS = 16;
+const TEXTURE_ANCHOR_METERS = 48;
+const MERCATOR_WORLD_METERS = 40_075_016.68557849;
+
+function smoothstep(value: number) {
+  const t = Math.min(1, Math.max(0, value));
+  return t * t * (3 - 2 * t);
+}
 
 function makeEdgeMask() {
   const width = 64;
@@ -31,34 +39,72 @@ function makeEdgeMask() {
   return texture;
 }
 
+function makeRockMask(geometry: THREE.PlaneGeometry) {
+  const width = PATCH_SEGMENTS + 1;
+  const bytes = new Uint8Array(width * width * 4);
+  const normals = geometry.getAttribute("normal");
+  const uv = geometry.getAttribute("uv1");
+  for (let index = 0; index < normals.count; index++) {
+    const u = uv.getX(index);
+    const v = uv.getY(index);
+    const edge = smoothstep(Math.min(u, v, 1 - u, 1 - v) / 0.08);
+    // The DEM supplies slope, not a surveyed rock classification.
+    const steepness = 1 - Math.abs(normals.getZ(index));
+    const exposure = smoothstep((steepness - 0.12) / 0.3);
+    const pixel = (Math.round(v * PATCH_SEGMENTS) * width + Math.round(u * PATCH_SEGMENTS)) * 4;
+    bytes[pixel] = bytes[pixel + 1] = bytes[pixel + 2] = Math.round(255 * edge * exposure);
+    bytes[pixel + 3] = 255;
+  }
+  const texture = new THREE.DataTexture(bytes, width, width, THREE.RGBAFormat);
+  texture.channel = 1;
+  texture.minFilter = THREE.LinearFilter;
+  texture.magFilter = THREE.LinearFilter;
+  texture.generateMipmaps = false;
+  texture.needsUpdate = true;
+  return texture;
+}
+
 export function createPbrTerrainLayer(map: GLMap, onStatus: (status: string) => void): StudyLayer {
   let renderer: THREE.WebGLRenderer | null = null;
-  let mesh: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshStandardMaterial> | null = null;
+  let groundMesh: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshStandardMaterial> | null = null;
+  let rockMesh: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshStandardMaterial> | null = null;
   let origin: MercatorCoordinate | null = null;
   let lastCenter: [number, number] | null = null;
   let lastZoom = 0;
   const scene = new THREE.Scene();
   const camera = new THREE.Camera();
-  const material = new THREE.MeshStandardMaterial({
+  const groundMaterial = new THREE.MeshStandardMaterial({
     color: 0xffffff,
     metalness: 0,
     roughness: 0.9,
     transparent: true,
-    opacity: 0.34,
+    opacity: 0.24,
     depthWrite: false,
     side: THREE.DoubleSide,
   });
-  material.alphaMap = makeEdgeMask();
-  scene.add(new THREE.AmbientLight(0xdce7ef, 1.5));
-  const sun = new THREE.DirectionalLight(0xffe9cc, 3);
+  groundMaterial.alphaMap = makeEdgeMask();
+  const rockMaterial = new THREE.MeshStandardMaterial({
+    color: 0xbebebe,
+    metalness: 0,
+    roughness: 0.9,
+    transparent: true,
+    opacity: 0.16,
+    depthWrite: false,
+    side: THREE.DoubleSide,
+  });
+  scene.add(new THREE.AmbientLight(0xdce7ef, 0.75));
+  const sun = new THREE.DirectionalLight(0xffe9cc, 1.5);
   sun.position.set(-350, 260, 700);
   scene.add(sun);
 
   function disposeMesh() {
-    if (!mesh) return;
-    scene.remove(mesh);
-    mesh.geometry.dispose();
-    mesh = null;
+    if (!groundMesh || !rockMesh) return;
+    scene.remove(groundMesh, rockMesh);
+    groundMesh.geometry.dispose();
+    rockMaterial.alphaMap?.dispose();
+    rockMaterial.alphaMap = null;
+    groundMesh = null;
+    rockMesh = null;
   }
 
   function refresh() {
@@ -75,7 +121,9 @@ export function createPbrTerrainLayer(map: GLMap, onStatus: (status: string) => 
     const geometry = new THREE.PlaneGeometry(PATCH_SIZE_METERS, PATCH_SIZE_METERS, PATCH_SEGMENTS, PATCH_SEGMENTS);
     const positions = geometry.getAttribute("position");
     const uv = geometry.getAttribute("uv");
-    const materialWidth = Math.max(MATERIAL_WIDTH_METERS, Math.min(18, MATERIAL_WIDTH_METERS * 2 ** (18 - map.getZoom())));
+    const worldScale = metersToMercator * MERCATOR_WORLD_METERS;
+    const anchorX = (nextOrigin.x * MERCATOR_WORLD_METERS) % TEXTURE_ANCHOR_METERS;
+    const anchorY = (nextOrigin.y * MERCATOR_WORLD_METERS) % TEXTURE_ANCHOR_METERS;
     const edgeUv = new Float32Array(uv.array.length);
     let missingElevation = false;
 
@@ -95,7 +143,7 @@ export function createPbrTerrainLayer(map: GLMap, onStatus: (status: string) => 
       positions.setZ(index, elevation + 3);
       edgeUv[index * 2] = uv.getX(index);
       edgeUv[index * 2 + 1] = uv.getY(index);
-      uv.setXY(index, x / materialWidth, y / materialWidth);
+      uv.setXY(index, (anchorX + x * worldScale) / GROUND_TILE_METERS, (anchorY - y * worldScale) / GROUND_TILE_METERS);
     }
 
     if (missingElevation) {
@@ -108,13 +156,17 @@ export function createPbrTerrainLayer(map: GLMap, onStatus: (status: string) => 
     uv.needsUpdate = true;
     geometry.computeVertexNormals();
     disposeMesh();
-    mesh = new THREE.Mesh(geometry, material);
-    mesh.frustumCulled = false;
-    scene.add(mesh);
+    rockMaterial.alphaMap = makeRockMask(geometry);
+    groundMesh = new THREE.Mesh(geometry, groundMaterial);
+    rockMesh = new THREE.Mesh(geometry, rockMaterial);
+    groundMesh.frustumCulled = rockMesh.frustumCulled = false;
+    groundMesh.renderOrder = 1;
+    rockMesh.renderOrder = 2;
+    scene.add(groundMesh, rockMesh);
     origin = nextOrigin;
     lastCenter = [center.lng, center.lat];
     lastZoom = map.getZoom();
-    onStatus("Illustrative material active");
+    onStatus("Ground + rock textures active");
     map.triggerRepaint();
   }
 
@@ -128,24 +180,32 @@ export function createPbrTerrainLayer(map: GLMap, onStatus: (status: string) => 
       renderer.autoClear = false;
       renderer.outputColorSpace = THREE.SRGBColorSpace;
       renderer.toneMapping = THREE.ACESFilmicToneMapping;
-      renderer.toneMappingExposure = 1.25;
+      renderer.toneMappingExposure = 1;
       const loader = new THREE.TextureLoader();
-      const load = (name: string) => {
-        const texture = loader.load(`/materials/rocks-ground-06/${name}.jpg`, () => map.triggerRepaint(), undefined, () => onStatus("Material texture unavailable"));
+      const load = (folder: string, name: string, scale: number) => {
+        const texture = loader.load(`/materials/${folder}/${name}.jpg`, () => map.triggerRepaint(), undefined, () => onStatus("Material texture unavailable"));
         texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+        texture.repeat.set(scale, scale);
         texture.anisotropy = Math.min(8, renderer?.capabilities.getMaxAnisotropy() ?? 1);
         return texture;
       };
-      material.map = load("color");
-      material.map.colorSpace = THREE.SRGBColorSpace;
-      material.normalMap = load("normal");
-      material.normalScale.set(0.7, 0.7);
-      material.roughnessMap = load("roughness");
-      material.needsUpdate = true;
+      groundMaterial.map = load("gravelly-sand", "color", 1);
+      groundMaterial.map.colorSpace = THREE.SRGBColorSpace;
+      groundMaterial.normalMap = load("gravelly-sand", "normal", 1);
+      groundMaterial.normalScale.set(0.75, 0.75);
+      groundMaterial.roughnessMap = load("gravelly-sand", "roughness", 1);
+      groundMaterial.needsUpdate = true;
+      const rockScale = GROUND_TILE_METERS / ROCK_TILE_METERS;
+      rockMaterial.map = load("rock-face", "color", rockScale);
+      rockMaterial.map.colorSpace = THREE.SRGBColorSpace;
+      rockMaterial.normalMap = load("rock-face", "normal", rockScale);
+      rockMaterial.normalScale.set(0.4, 0.4);
+      rockMaterial.roughnessMap = load("rock-face", "roughness", rockScale);
+      rockMaterial.needsUpdate = true;
       refresh();
     },
     render(_gl, args) {
-      if (!renderer || !mesh || !origin || map.getZoom() < 15) return;
+      if (!renderer || !groundMesh || !rockMesh || !origin || map.getZoom() < 15) return;
       const scale = origin.meterInMercatorCoordinateUnits();
       const model = new THREE.Matrix4()
         .makeTranslation(origin.x, origin.y, origin.z)
@@ -158,11 +218,13 @@ export function createPbrTerrainLayer(map: GLMap, onStatus: (status: string) => 
     },
     onRemove() {
       disposeMesh();
-      material.map?.dispose();
-      material.normalMap?.dispose();
-      material.roughnessMap?.dispose();
-      material.alphaMap?.dispose();
-      material.dispose();
+      for (const material of [groundMaterial, rockMaterial]) {
+        material.map?.dispose();
+        material.normalMap?.dispose();
+        material.roughnessMap?.dispose();
+        material.alphaMap?.dispose();
+        material.dispose();
+      }
       renderer?.dispose();
       renderer = null;
     },
