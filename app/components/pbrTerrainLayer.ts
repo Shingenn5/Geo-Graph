@@ -6,10 +6,13 @@ export const PBR_TERRAIN_LAYER_ID = "pbr-terrain-study";
 
 type StudyLayer = CustomLayerInterface & { refresh: () => void };
 
-const PATCH_SIZE_METERS = 1_000;
-const PATCH_SEGMENTS = 64;
+const PATCH_LEVELS = [
+  { zoom: 15, sizeMeters: 1_500, segments: 64 },
+  { zoom: 15.75, sizeMeters: 1_100, segments: 80 },
+  { zoom: 16.5, sizeMeters: 800, segments: 104 },
+  { zoom: 17.25, sizeMeters: 600, segments: 128 },
+] as const;
 const GROUND_TILE_METERS = 12;
-const ROCK_TILE_METERS = 16;
 const TEXTURE_ANCHOR_METERS = 48;
 const MERCATOR_WORLD_METERS = 40_075_016.68557849;
 
@@ -39,8 +42,8 @@ function makeEdgeMask() {
   return texture;
 }
 
-function makeRockMask(geometry: THREE.PlaneGeometry) {
-  const width = PATCH_SEGMENTS + 1;
+function makeRockMask(geometry: THREE.PlaneGeometry, segments: number) {
+  const width = segments + 1;
   const bytes = new Uint8Array(width * width * 4);
   const normals = geometry.getAttribute("normal");
   const uv = geometry.getAttribute("uv1");
@@ -51,7 +54,7 @@ function makeRockMask(geometry: THREE.PlaneGeometry) {
     // The DEM supplies slope, not a surveyed rock classification.
     const steepness = 1 - Math.abs(normals.getZ(index));
     const exposure = smoothstep((steepness - 0.12) / 0.3);
-    const pixel = (Math.round(v * PATCH_SEGMENTS) * width + Math.round(u * PATCH_SEGMENTS)) * 4;
+    const pixel = (Math.round(v * segments) * width + Math.round(u * segments)) * 4;
     bytes[pixel] = bytes[pixel + 1] = bytes[pixel + 2] = Math.round(255 * edge * exposure);
     bytes[pixel + 3] = 255;
   }
@@ -70,7 +73,8 @@ export function createPbrTerrainLayer(map: GLMap, onStatus: (status: string) => 
   let rockMesh: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshStandardMaterial> | null = null;
   let origin: MercatorCoordinate | null = null;
   let lastCenter: [number, number] | null = null;
-  let lastZoom = 0;
+  let lastPatchSize = 0;
+  let lastPatchSegments = 0;
   const scene = new THREE.Scene();
   const camera = new THREE.Camera();
   const groundMaterial = new THREE.MeshStandardMaterial({
@@ -92,6 +96,22 @@ export function createPbrTerrainLayer(map: GLMap, onStatus: (status: string) => 
     depthWrite: false,
     side: THREE.DoubleSide,
   });
+  const rockTransform = new THREE.Vector3(0, 0, 1);
+  // Project the rock color and roughness from local terrain coordinates along
+  // all three axes. The existing UV projection compresses texture distance on
+  // steep faces, which makes the overlay look stretched at close zoom.
+  rockMaterial.onBeforeCompile = (shader) => {
+    shader.uniforms.uRockTransform = { value: rockTransform };
+    shader.vertexShader = shader.vertexShader
+      .replace("#include <common>", "#include <common>\nvarying vec3 vRockPosition; varying vec3 vRockNormal;")
+      .replace("#include <begin_vertex>", "#include <begin_vertex>\nvRockPosition = transformed;")
+      .replace("#include <beginnormal_vertex>", "#include <beginnormal_vertex>\nvRockNormal = objectNormal;");
+    shader.fragmentShader = shader.fragmentShader
+      .replace("#include <common>", "#include <common>\nvarying vec3 vRockPosition; varying vec3 vRockNormal; uniform vec3 uRockTransform;\nvec4 sampleRockTriplanar(sampler2D tex) { vec3 w = pow(abs(normalize(vRockNormal)), vec3(4.0)); w /= max(w.x + w.y + w.z, 0.0001); vec3 p = vec3(uRockTransform.x + vRockPosition.x * uRockTransform.z, uRockTransform.y - vRockPosition.y * uRockTransform.z, vRockPosition.z); vec2 xz = p.xz / 16.0; vec2 yz = p.yz / 16.0; vec2 xy = p.xy / 16.0; return texture2D(tex, yz) * w.x + texture2D(tex, xz) * w.y + texture2D(tex, xy) * w.z; }")
+      .replace("vec4 sampledDiffuseColor = texture2D( map, vMapUv );", "vec4 sampledDiffuseColor = sampleRockTriplanar(map);")
+      .replace("vec4 texelRoughness = texture2D( roughnessMap, vRoughnessMapUv );", "vec4 texelRoughness = sampleRockTriplanar(roughnessMap);");
+  };
+  rockMaterial.customProgramCacheKey = () => "rock-triplanar-v2";
   scene.add(new THREE.AmbientLight(0xdce7ef, 0.75));
   const sun = new THREE.DirectionalLight(0xffe9cc, 1.5);
   sun.position.set(-350, 260, 700);
@@ -110,20 +130,27 @@ export function createPbrTerrainLayer(map: GLMap, onStatus: (status: string) => 
   function refresh() {
     if (map.getZoom() < 15 || !map.getTerrain()) return;
     const center = map.getCenter().wrap();
+    const zoom = map.getZoom();
+    // Stable bands avoid resampling the DEM on every fractional zoom change.
+    const level = [...PATCH_LEVELS].reverse().find(item => zoom >= item.zoom) ?? PATCH_LEVELS[0];
+    const patchSize = level.sizeMeters;
+    const patchSegments = level.segments;
     if (lastCenter) {
       const dx = (center.lng - lastCenter[0]) * 111_320 * Math.cos(center.lat * Math.PI / 180);
       const dy = (center.lat - lastCenter[1]) * 111_320;
-      if (Math.hypot(dx, dy) < 130 && Math.abs(map.getZoom() - lastZoom) < 1) return;
+      const movedEnough = Math.hypot(dx, dy) >= Math.min(130, patchSize * 0.12);
+      if (!movedEnough && patchSize === lastPatchSize && patchSegments === lastPatchSegments) return;
     }
 
     const nextOrigin = MercatorCoordinate.fromLngLat(center, 0);
     const metersToMercator = nextOrigin.meterInMercatorCoordinateUnits();
-    const geometry = new THREE.PlaneGeometry(PATCH_SIZE_METERS, PATCH_SIZE_METERS, PATCH_SEGMENTS, PATCH_SEGMENTS);
+    const geometry = new THREE.PlaneGeometry(patchSize, patchSize, patchSegments, patchSegments);
     const positions = geometry.getAttribute("position");
     const uv = geometry.getAttribute("uv");
     const worldScale = metersToMercator * MERCATOR_WORLD_METERS;
     const anchorX = (nextOrigin.x * MERCATOR_WORLD_METERS) % TEXTURE_ANCHOR_METERS;
     const anchorY = (nextOrigin.y * MERCATOR_WORLD_METERS) % TEXTURE_ANCHOR_METERS;
+    rockTransform.set(anchorX, anchorY, worldScale);
     const edgeUv = new Float32Array(uv.array.length);
     let missingElevation = false;
 
@@ -156,7 +183,7 @@ export function createPbrTerrainLayer(map: GLMap, onStatus: (status: string) => 
     uv.needsUpdate = true;
     geometry.computeVertexNormals();
     disposeMesh();
-    rockMaterial.alphaMap = makeRockMask(geometry);
+    rockMaterial.alphaMap = makeRockMask(geometry, patchSegments);
     groundMesh = new THREE.Mesh(geometry, groundMaterial);
     rockMesh = new THREE.Mesh(geometry, rockMaterial);
     groundMesh.frustumCulled = rockMesh.frustumCulled = false;
@@ -165,7 +192,8 @@ export function createPbrTerrainLayer(map: GLMap, onStatus: (status: string) => 
     scene.add(groundMesh, rockMesh);
     origin = nextOrigin;
     lastCenter = [center.lng, center.lat];
-    lastZoom = map.getZoom();
+    lastPatchSize = patchSize;
+    lastPatchSegments = patchSegments;
     onStatus("Ground + rock textures active");
     map.triggerRepaint();
   }
@@ -195,12 +223,13 @@ export function createPbrTerrainLayer(map: GLMap, onStatus: (status: string) => 
       groundMaterial.normalScale.set(0.75, 0.75);
       groundMaterial.roughnessMap = load("gravelly-sand", "roughness", 1);
       groundMaterial.needsUpdate = true;
-      const rockScale = GROUND_TILE_METERS / ROCK_TILE_METERS;
-      rockMaterial.map = load("rock-face", "color", rockScale);
+      rockMaterial.map = load("rock-face", "color", 1);
       rockMaterial.map.colorSpace = THREE.SRGBColorSpace;
-      rockMaterial.normalMap = load("rock-face", "normal", rockScale);
-      rockMaterial.normalScale.set(0.4, 0.4);
-      rockMaterial.roughnessMap = load("rock-face", "roughness", rockScale);
+      // Tangent-space normal maps cannot use the same three-axis blend without
+      // a separate basis transform, so omit it rather than retain visibly
+      // stretched normals on cliffs.
+      rockMaterial.normalMap = null;
+      rockMaterial.roughnessMap = load("rock-face", "roughness", 1);
       rockMaterial.needsUpdate = true;
       refresh();
     },

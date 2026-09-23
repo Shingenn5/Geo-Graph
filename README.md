@@ -1,30 +1,30 @@
 # Geo Graph
 
-React / MapLibre globe, 3D terrain, city-building, and surface-geology explorer with a small plain CSS stylesheet.
+Geo Graph is a React and MapLibre field survey workspace. It uses a globe at broad zoom, reveals three-dimensional terrain at regional scale, and lets users inspect published ground evidence at a selected location. The Uinta Basin pilot connects soil, surface geology, Utah oil and gas well records, and a separately sourced research core. It shows the evidence behind a result, including missing data and interpretation limits.
 
-## Development
+## Run locally
 
-Install with `npm ci`, then run `npm run dev`. Build with `npm run build`.
+Use Node.js 22.13 or newer for the app. Run `npm ci`, then `npm run dev`. Check types with `npx tsc --noEmit` and build with `npm run build`. On Node.js 24 or newer, run focused tests with `node --test app/lib/selection/geometry.test.ts app/lib/logs/las.test.ts`.
 
-## Data layers
+## Pilot workflow
 
-- Esri World Imagery satellite basemap.
-- USGS topographic basemap (United States).
-- Mapzen Terrarium elevation tiles with explicit Terrarium decoding and a fixed, restrained relief scale.
-- OpenFreeMap vector buildings from OpenStreetMap, extruded from mapped heights at city scale.
-- USDA NRCS Soil Data Access / SSURGO point lookups for map units, dominant components, every published horizon, texture fractions, water capacity, hydraulic conductivity, hydric/runoff context, restrictive layers, corrosion classes, and related physical properties.
-- Dashboard views for overview, agriculture, water, construction, and environmental screening. These organize published observations without turning them into unsupported suitability scores.
-- Self-contained soil survey report export with the full dominant-component horizon profile, a print/save-as-PDF layout, and interpretation boundaries.
-- Macrostrat cartographic surface geology with click-through original survey references.
-- USGS Quaternary faults (U.S. coverage; not a complete inventory of every fault).
-- Photon / OpenStreetMap for submitted location searches; coordinate input also works.
+Select **Explore Uinta Basin public-data pilot** to open a public well pad near Roosevelt, Utah. The shortcut selects a point and loads the current published soil, surface geology, and nearby Utah oil and gas well records. The Wellsite view displays those wells on the map and lists the nearest records. Selecting a listed well moves the map to its published surface location.
 
-Third-party services require a network connection and may have coverage gaps or usage limits. Lookup failures and absent records are distinct UI states. Overlapping survey records are not interpreted as depth-ordered strata. Basemaps are draped over an elevation mesh, not underground volumes.
+Use **Select ground** for a point survey or **Select area** for a two-corner rectangle. Point exports include a printable evidence report, JSON, and GeoJSON with source details. Area exports contain geometry and a WGS84 ellipsoid area calculation; they do not claim that soil or geology is uniform inside the polygon. The existing full soil-profile report remains available when SSURGO returns one.
 
-The camera begins on a MapLibre globe and changes to a Mercator terrain view for close exploration. Relief and 3D buildings are selectable visual modes: terrain is enabled for landform exploration, while city scale switches to building extrusion so MapLibre does not render both depth buffers over the same scene. Geology and fault overlays remain independently selectable. A map click creates a persistent selection ring and loads soil, geology, and building details for that location. Terrain cameras stay clamped to the ground with a limited pitch to avoid clipping through the elevation mesh.
+The Wellsite view also links a [Utah Geological Survey Skyline 16 core log and collection article](https://geology.utah.gov/map-pub/survey-notes/core-center-news/lacustrine-teaching-tool/). Its approximate Mahogany bed depth can be selected on a depth track. The core is regional research context, with no asserted coordinate match to the selected public well. A local LAS 2.0 file can be opened for a depth-curve preview; it stays in the browser session and is not automatically associated with any well or core.
 
-The soil integration follows the soilDB project's recommended Soil Data Access path and uses `SDA_Get_Mukey_from_intersection_with_WktWgs84` to resolve the SSURGO map unit at the selected WGS84 point. Published fields may be blank for urban land, rock outcrop, water, or surveys without a representative value.
+## Published data and display
 
-## Future underground cutaway
+- MapLibre globe, Mapterhorn terrain, Esri World Imagery, and optional USGS NAIP Plus aerial imagery. The aerial layer can fail independently while the Esri underlay remains visible.
+- Macrostrat mapped surface geology with original survey references, USDA NRCS SSURGO map-unit/component/horizon lookup, and USGS Quaternary fault display.
+- [UGRC Utah Oil Gas Wells](https://gis.utah.gov/products/sgid/energy/oil-gas-wells/) public surface locations, credited to UGRC SGID and Utah DNR-OGM. The API filters flagged confidential records and separates an empty result from an upstream failure.
+- Optional buildings, contour lines, and a close-range Three.js material study. The material study blends illustrative ground and rock textures over DEM-derived geometry; its visual materials are not a geological classification.
 
-A cutaway requires a regional geological model or borehole-derived horizons with verified vertical datum, depth units, confidence, and provenance. Add a separate depth dataset and renderer; do not extrude surface polygons to invented depths. Current functionality intentionally stops at 3D terrain and mapped surface data.
+The [Uinta pilot coverage audit](docs/uinta-pilot-coverage.md) records data sources, verified point results, coverage gaps, licensing notes, and elevation/datum limits.
+
+## Interpretation limits
+
+SSURGO represents mapped soil units, not a sample collected at the clicked point. Macrostrat units are mapped surface interpretations, not depth-ordered strata. The Utah well layer covers oil and gas **surface** locations in that state; it is not a national well inventory or a well trajectory dataset. LAS depth is source-reported and remains MD/TVD and datum-unknown unless independently established. The Skyline 16 core has not been tied to a displayed well. Imagery pixels and rendered terrain mesh density do not establish the resolution or vertical datum of the underlying elevation survey.
+
+The close-range renderer is still one adaptive material patch with edge fade. A tile-streamed local scene, confirmed site-specific DEM/source imagery metadata, validated borehole ties, and any underground cutaway remain future work.
