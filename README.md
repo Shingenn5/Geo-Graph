@@ -2,6 +2,8 @@
 
 Geo Graph is a React and MapLibre field survey workspace. It uses a globe at broad zoom, reveals three-dimensional terrain at regional scale, and lets users inspect published ground evidence at a selected location. The Uinta Basin pilot connects soil, surface geology, Utah oil and gas well records, and a separately sourced research core. It shows the evidence behind a result, including missing data and interpretation limits.
 
+Country, state, and city labels help orient the map. The **World**, **Region**, and **Ground** controls change scale while keeping the current location centered. The map-center readout shows an approximate state and country when reverse geocoding is available, and coordinates otherwise.
+
 ## Run locally
 
 Use Node.js 22.13 or newer for the app. Run `npm ci`, then `npm run dev`. Check types with `npx tsc --noEmit` and build with `npm run build`. On Node.js 24 or newer, run focused tests with `node --test app/lib/selection/geometry.test.ts app/lib/logs/las.test.ts`.
