@@ -19,7 +19,7 @@ The Wellsite view also links a [Utah Geological Survey Skyline 16 core log and c
 - MapLibre globe, Mapterhorn terrain, Esri World Imagery, and optional USGS NAIP Plus aerial imagery. The aerial layer can fail independently while the Esri underlay remains visible.
 - Macrostrat mapped surface geology with original survey references, USDA NRCS SSURGO map-unit/component/horizon lookup, and USGS Quaternary fault display.
 - [UGRC Utah Oil Gas Wells](https://gis.utah.gov/products/sgid/energy/oil-gas-wells/) public surface locations, credited to UGRC SGID and Utah DNR-OGM. The API filters flagged confidential records and separates an empty result from an upstream failure.
-- Optional buildings, contour lines, and a close-range Three.js material study. The material study blends illustrative ground and rock textures over DEM-derived geometry; its visual materials are not a geological classification.
+- Optional buildings, contour lines, and a close-range Three.js material study. The material study adds illustrative rock texture on steep DEM-derived terrain while preserving aerial imagery elsewhere; its visual materials are not a geological classification.
 
 The [Uinta pilot coverage audit](docs/uinta-pilot-coverage.md) records data sources, verified point results, coverage gaps, licensing notes, and elevation/datum limits.
 

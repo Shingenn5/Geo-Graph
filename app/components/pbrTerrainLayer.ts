@@ -15,6 +15,8 @@ const PATCH_LEVELS = [
 const GROUND_TILE_METERS = 12;
 const TEXTURE_ANCHOR_METERS = 48;
 const MERCATOR_WORLD_METERS = 40_075_016.68557849;
+const MAX_PATCH_METERS = 4_000;
+const MAX_PATCH_SEGMENTS = 160;
 
 function smoothstep(value: number) {
   const t = Math.min(1, Math.max(0, value));
@@ -133,8 +135,37 @@ export function createPbrTerrainLayer(map: GLMap, onStatus: (status: string) => 
     const zoom = map.getZoom();
     // Stable bands avoid resampling the DEM on every fractional zoom change.
     const level = [...PATCH_LEVELS].reverse().find(item => zoom >= item.zoom) ?? PATCH_LEVELS[0];
-    const patchSize = level.sizeMeters;
-    const patchSegments = level.segments;
+    // Keep the local terrain overlay beyond the visible map footprint so its
+    // feathered boundary stays off-screen during ordinary pans. A fixed-size
+    // square showed a hard cutoff on wide or pitched views.
+    const container = map.getContainer();
+    const corners = [
+      map.unproject([0, 0]),
+      map.unproject([container.clientWidth, 0]),
+      map.unproject([0, container.clientHeight]),
+      map.unproject([container.clientWidth, container.clientHeight]),
+    ];
+    const metersBetween = (a: typeof center, b: typeof center) => {
+      const meanLat = (a.lat + b.lat) * Math.PI / 360;
+      const dx = (b.lng - a.lng) * 111_320 * Math.cos(meanLat);
+      const dy = (b.lat - a.lat) * 111_320;
+      return Math.hypot(dx, dy);
+    };
+    const viewportRadius = Math.max(...corners.map(corner => metersBetween(center, corner)));
+    // The alpha feather occupies the outer ~11% of each edge. Putting its
+    // start beyond the farthest visible corner keeps it from reading as a
+    // square frame during close orbit.
+    const neededPatchSize = Math.max(level.sizeMeters, viewportRadius * 2.8);
+    if (!Number.isFinite(neededPatchSize) || neededPatchSize > MAX_PATCH_METERS) {
+      disposeMesh();
+      onStatus("Material study paused for this camera view");
+      map.triggerRepaint();
+      return;
+    }
+    const patchSize = neededPatchSize;
+    // Spend geometry where the terrain is close, with a hard vertex budget on
+    // very wide views to keep each refresh responsive.
+    const patchSegments = Math.min(MAX_PATCH_SEGMENTS, Math.max(level.segments, Math.ceil(patchSize / 8)));
     if (lastCenter) {
       const dx = (center.lng - lastCenter[0]) * 111_320 * Math.cos(center.lat * Math.PI / 180);
       const dy = (center.lat - lastCenter[1]) * 111_320;
@@ -175,7 +206,9 @@ export function createPbrTerrainLayer(map: GLMap, onStatus: (status: string) => 
 
     if (missingElevation) {
       geometry.dispose();
+      disposeMesh();
       onStatus("Waiting for elevation tiles");
+      map.triggerRepaint();
       return;
     }
     geometry.setAttribute("uv1", new THREE.Float32BufferAttribute(edgeUv, 2));
@@ -186,6 +219,10 @@ export function createPbrTerrainLayer(map: GLMap, onStatus: (status: string) => 
     rockMaterial.alphaMap = makeRockMask(geometry, patchSegments);
     groundMesh = new THREE.Mesh(geometry, groundMaterial);
     rockMesh = new THREE.Mesh(geometry, rockMaterial);
+    // A generic gravel layer obscures real aerial imagery over fields, roads,
+    // and other flat surfaces. Keep the mesh for shared geometry ownership,
+    // but show only slope-masked rock until land-cover masks are available.
+    groundMesh.visible = false;
     groundMesh.frustumCulled = rockMesh.frustumCulled = false;
     groundMesh.renderOrder = 1;
     rockMesh.renderOrder = 2;
@@ -194,7 +231,7 @@ export function createPbrTerrainLayer(map: GLMap, onStatus: (status: string) => 
     lastCenter = [center.lng, center.lat];
     lastPatchSize = patchSize;
     lastPatchSegments = patchSegments;
-    onStatus("Ground + rock textures active");
+    onStatus("Rock detail active; aerial imagery preserved");
     map.triggerRepaint();
   }
 
