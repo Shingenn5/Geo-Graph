@@ -6,6 +6,9 @@
     "node": ">=22.13.0"
   },
   "scripts": {
+    "setup": "node scripts/local-setup.mjs",
+    "doctor": "node scripts/local-setup.mjs --check",
+    "launch": "node scripts/launch-local.mjs",
     "install:ci": "node scripts/install-ci.mjs",
     "dev": "node scripts/run-framework.mjs dev",
     "build": "node scripts/run-framework.mjs build",

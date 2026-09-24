@@ -6,7 +6,32 @@ Country, state, and city labels help orient the map. The **World**, **Region**, 
 
 ## Run locally
 
-Use Node.js 22.13 or newer for the app. Run `npm ci`, then `npm run dev`. Check types with `npx tsc --noEmit` and build with `npm run build`. On Node.js 24 or newer, run focused tests with `node --test app/lib/selection/geometry.test.ts app/lib/logs/las.test.ts`.
+### Windows: install and open
+
+1. Install Node.js 22.13 or newer with npm. Reopen your terminal after installing it.
+2. Extract or clone this project into a writable folder. Double-click **Install Geo Graph.cmd**. The installer downloads the locked dependencies and prepares both viewers' map assets.
+3. Double-click **Start Geo Graph.cmd**. Your browser opens when the local app is ready. Keep the launcher window open while using the app; press Ctrl+C to stop it.
+
+The Start launcher also runs setup if dependencies are missing or the package lock, package settings, Node version, or platform changed. Ordinary launches reuse the installation. No administrator launch, Docker, or cloud account is required. Internet access is needed for initial installation and external map/data services; this is not an offline map package.
+
+### Command-line setup (Windows, macOS, Linux)
+
+```sh
+npm run setup
+npm run launch
+```
+
+In Windows PowerShell, use `npm.cmd` if script execution policy blocks `npm`. `npm run launch -- --no-browser` starts without opening a browser. The local launcher uses the development server at `http://127.0.0.1:5173`; it does not publish changes or install a native desktop executable.
+
+### Troubleshooting
+
+- Run `npm run doctor` to check Node and installation readiness.
+- Rerun `npm run setup` to repair an incomplete installation. Stop the local server first; setup replaces dependencies with the lockfile versions.
+- If downloads fail, check your network/proxy settings and retry. Setup stops on failure and never marks that attempt successful.
+- If port 5173 is occupied, close the previous launcher or run `npm run dev -- --port 5174` and use the printed URL.
+- Run launchers from the extracted project, not from inside a ZIP archive. Error windows remain open so messages can be read.
+
+For development, `npm run dev` remains available. Check types with `npx tsc --noEmit` and build with `npm run build`. On Node.js 24 or newer, run focused tests with `node --test app/lib/selection/geometry.test.ts app/lib/logs/las.test.ts`.
 
 ## Pilot workflow
 
