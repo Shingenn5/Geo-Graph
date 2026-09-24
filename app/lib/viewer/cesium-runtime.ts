@@ -29,7 +29,7 @@ export function createScene(container: HTMLElement, callbacks: SceneCallbacks) {
   viewer.scene.globe.baseColor = C.Color.fromCssColorString("#677d70");
   const controls=viewer.scene.screenSpaceCameraController;
   controls.minimumZoomDistance = 100;
-  controls.zoomEventTypes=[C.CameraEventType.WHEEL,C.CameraEventType.PINCH];
+  controls.zoomEventTypes=[C.CameraEventType.PINCH];
   controls.tiltEventTypes=[C.CameraEventType.RIGHT_DRAG,C.CameraEventType.MIDDLE_DRAG,C.CameraEventType.PINCH,{eventType:C.CameraEventType.LEFT_DRAG,modifier:C.KeyboardEventModifier.CTRL}];
   controls.inertiaSpin=0.65;
   controls.inertiaZoom=0.55;
@@ -37,6 +37,8 @@ export function createScene(container: HTMLElement, callbacks: SceneCallbacks) {
   viewer.camera.lookAt(C.Cartesian3.fromDegrees(-112.112,36.106),new C.HeadingPitchRange(0,C.Math.toRadians(-55),16000));
   viewer.camera.lookAtTransform(C.Matrix4.IDENTITY);
   let lastFocus=C.Cartographic.fromDegrees(-112.112,36.106);
+  let zoomFocus:C.Cartographic|undefined;
+  let zoomRange=0;
   function groundCenter(){
     const screen=new C.Cartesian2(viewer.canvas.clientWidth/2,viewer.canvas.clientHeight/2);
     const ray=viewer.camera.getPickRay(screen);
@@ -44,8 +46,8 @@ export function createScene(container: HTMLElement, callbacks: SceneCallbacks) {
     if(hit)lastFocus=C.Cartographic.fromCartesian(hit);
     return lastFocus;
   }
-  function moveTo(focus:C.Cartographic,range:number,heading=viewer.camera.heading){
-    const pitch=range>1_000_000?-C.Math.PI_OVER_TWO:viewer.camera.pitch<C.Math.toRadians(-80)||viewer.camera.pitch>C.Math.toRadians(-15)?C.Math.toRadians(-55):viewer.camera.pitch;
+  function moveTo(focus:C.Cartographic,range:number,heading=viewer.camera.heading,overhead=false){
+    const pitch=overhead?-C.Math.PI_OVER_TWO:viewer.camera.pitch<C.Math.toRadians(-80)||viewer.camera.pitch>C.Math.toRadians(-15)?C.Math.toRadians(-55):viewer.camera.pitch;
     const ground=C.Cartesian3.fromRadians(focus.longitude,focus.latitude,focus.height);
     viewer.camera.flyToBoundingSphere(new C.BoundingSphere(ground,0),{offset:new C.HeadingPitchRange(heading,pitch,Math.max(200,Math.min(25_000_000,range))),duration:1.1,complete:finishNavigation});
     viewer.scene.requestRender();
@@ -59,6 +61,17 @@ export function createScene(container: HTMLElement, callbacks: SceneCallbacks) {
     const focus=groundCenter();
     return C.Cartesian3.distance(viewer.camera.positionWC,C.Cartesian3.fromRadians(focus.longitude,focus.latitude,focus.height));
   }
+  function zoom(factor:number){
+    if(!zoomFocus){zoomFocus=C.Cartographic.clone(groundCenter());zoomRange=currentRange();}
+    zoomRange=Math.max(200,Math.min(25_000_000,zoomRange*factor));
+    moveTo(zoomFocus,zoomRange);
+  }
+  function onWheel(event:WheelEvent){
+    event.preventDefault();
+    const steps=Math.max(-4,Math.min(4,event.deltaY/(event.deltaMode===1?3:event.deltaMode===2?1:100)));
+    if(steps)zoom(Math.pow(1.3,steps));
+  }
+  viewer.canvas.addEventListener("wheel",onWheel,{passive:false});
   let disposed = false;
   const gate = new TransitionGate();
   const cache = new Map<Surface, C.ImageryLayer>();
@@ -156,7 +169,7 @@ export function createScene(container: HTMLElement, callbacks: SceneCallbacks) {
     callbacks.pick(C.Math.toDegrees(point.longitude),C.Math.toDegrees(point.latitude),point.height);viewer.scene.requestRender();
   },C.ScreenSpaceEventType.LEFT_CLICK);
   viewer.camera.moveStart.addEventListener(()=>{moving=true;viewer.scene.globe.maximumScreenSpaceError=8;});
-  function finishNavigation(){moving=false;viewer.scene.globe.maximumScreenSpaceError=4;const p=groundCenter();callbacks.center(C.Math.toDegrees(p.longitude),C.Math.toDegrees(p.latitude));viewer.scene.requestRender();}
+  function finishNavigation(){moving=false;zoomFocus=undefined;viewer.scene.globe.maximumScreenSpaceError=4;const p=groundCenter();callbacks.center(C.Math.toDegrees(p.longitude),C.Math.toDegrees(p.latitude));viewer.scene.requestRender();}
   viewer.camera.moveEnd.addEventListener(finishNavigation);
   // Only sample frame timing while moving; idle mode does not run a permanent frame loop.
   let lastFrame=0;let slowFrames=0;let frameCount=0;
@@ -166,9 +179,9 @@ export function createScene(container: HTMLElement, callbacks: SceneCallbacks) {
   void surface("Natural");setLabels(true);void terrainReady;
   return {
     surface, labels:setLabels, fly,
-    scale(range:number){moveTo(groundCenter(),range);},
-    zoom(factor:number){moveTo(groundCenter(),currentRange()*factor);},
+    scale(range:number){zoomFocus=undefined;moveTo(groundCenter(),range,viewer.camera.heading,range>1_000_000);},
+    zoom,
     north(){moveTo(groundCenter(),currentRange(),0);},
-    destroy(){disposed=true;gate.cancel();cancelWait?.();cancelAnimationFrame(fadeFrame);handler.destroy();viewer.destroy();},
+    destroy(){disposed=true;viewer.canvas.removeEventListener("wheel",onWheel);gate.cancel();cancelWait?.();cancelAnimationFrame(fadeFrame);handler.destroy();viewer.destroy();},
   };
 }
