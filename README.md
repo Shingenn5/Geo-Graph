@@ -16,6 +16,8 @@ The standard MapLibre viewer opens by default. Its layer changes retain the prev
 
 Choose **Try enhanced 3D** to open the separate Cesium trial. It offers natural imagery, elevation coloring, mapped geology, soil map units, ESA WorldCover 2021, and a USGS 3DEP hillshade. You can orbit, pan, zoom, use place presets, toggle labels, and click terrain to inspect ground evidence. Return using **Standard viewer**.
 
+Both viewers offer **Clear imagery**, an optional Esri World Imagery (Clarity) archive view. Compare it with current imagery in remote regions; archived scenes may look clearer, older, or identical. It does not create detail beyond the source images. The enhanced viewer includes Patagonia, the Australian Outback, and the Sahara among its comparison locations.
+
 The trial still uses Re:Earth/Mapterhorn global terrain. USGS relief is a hillshade overlay, not a 3DEP terrain mesh. Imagery and thematic coverage vary by place, and cold layer loads depend on their source services. The Cesium trial supplements the standard viewer; it does not replace its area selection and well workflows. See the [viewer rollout notes](docs/viewer-rollout.md) for sources, performance measurements, and remaining quality gates.
 
 ## Run locally

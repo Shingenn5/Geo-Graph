@@ -2,7 +2,7 @@ import * as C from "cesium";
 import { trackImagery } from "./imagery-progress";
 import { TransitionGate } from "./transition";
 import { recordMetric } from "./metrics";
-import { WORLDCOVER_LAYER, type Surface } from "./sources";
+import { CLEAR_IMAGERY_URL, WORLDCOVER_LAYER, type Surface } from "./sources";
 
 export type SceneCallbacks = {
   status: (message: string) => void;
@@ -65,6 +65,7 @@ export function createScene(container: HTMLElement, callbacks: SceneCallbacks) {
 
   function provider(surface: Surface): C.ImageryProvider {
     if(surface === "Natural") return new C.UrlTemplateImageryProvider({url:"https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",maximumLevel:19,credit:"Imagery © Esri, Maxar, Earthstar Geographics and GIS User Community"});
+    if(surface === "Clear imagery") return new C.UrlTemplateImageryProvider({url:CLEAR_IMAGERY_URL,maximumLevel:19,credit:"World Imagery (Clarity) archive © Esri, Vantor, Earthstar Geographics, IGN and GIS User Community"});
     if(surface === "Geology") return new C.UrlTemplateImageryProvider({url:`${location.origin}/api/tiles/{z}/{x}/{y}`,maximumLevel:14,credit:"Macrostrat and original survey authors · CC BY 4.0"});
     if(surface === "Soil") return new C.WebMapServiceImageryProvider({url:"https://SDMDataAccess.sc.egov.usda.gov/Spatial/SDM.wms",layers:"mapunitpoly",parameters:{transparent:true,format:"image/png",version:"1.1.1"},rectangle:C.Rectangle.fromDegrees(-180,17,-65,72),maximumLevel:17,credit:"USDA NRCS SSURGO"});
     if(surface === "Land cover") return new C.WebMapServiceImageryProvider({url:"https://mapproxy.terrascope.be/mapproxy/service",layers:WORLDCOVER_LAYER,parameters:{transparent:true,format:"image/png",version:"1.1.1",time:"2021-01-01"},maximumLevel:14,credit:"© ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium"});

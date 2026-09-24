@@ -26,6 +26,11 @@ remain in the standard viewer.
 - **Natural imagery and labels:** Esri World Imagery and World Boundaries and
   Places. Native resolution varies; rendering cannot invent detail in remote
   imagery. Source credits remain visible.
+- **Clear imagery:** Optional Esri World Imagery (Clarity) archive tiles from
+  `clarity.maptiles.arcgis.com`, loaded only when selected. Esri describes this
+  view as potentially clearer or more accurate than current imagery in some
+  areas. It is in mature support and no longer updated; scenes may be older or
+  identical. The current imagery stays available as a fallback underlay.
 - **Geology:** existing Macrostrat proxy and source survey attribution, CC BY 4.0.
   These are mapped surface units, not measured subsurface layers.
 - **Soils:** USDA NRCS SSURGO map units and existing point queries. Coverage is
