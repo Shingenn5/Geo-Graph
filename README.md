@@ -4,6 +4,12 @@ Geo Graph is a field survey workspace for exploring terrain and inspecting mappe
 
 Country, state, and city labels help orient the map. The **World**, **Region**, and **Ground** controls change scale while keeping the current location centered. The map-center readout shows an approximate state and country when reverse geocoding is available, and coordinates otherwise.
 
+## Quick start
+
+The [hosted Geo Graph preview](https://geo-graph-rocks.elliottdavis05.chatgpt.site/) is currently available to the site owner. To run your own copy on Windows, install [Node.js 22.13 or newer](https://nodejs.org/), then double-click [Install Geo Graph.cmd](Install%20Geo%20Graph.cmd) and [Start Geo Graph.cmd](Start%20Geo%20Graph.cmd) from an extracted or cloned project folder. The launcher opens the app at `http://127.0.0.1:5173`.
+
+`main` is the repository's primary development branch. Local installation runs from your checkout; updating GitHub does not update an already deployed Site automatically. See [Run locally](#run-locally) for command-line setup and troubleshooting.
+
 ## Viewers
 
 The standard MapLibre viewer opens by default. Its layer changes retain the previous map while the next view loads. Search for a place or coordinates, click **Select ground** to inspect a point, or use **Select area** for an area survey. Optional buildings, contours, and the close-range material study are available in this viewer.
