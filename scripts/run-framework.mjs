@@ -1,4 +1,5 @@
 import "./sync-map-worker.mjs";
+import "./sync-cesium.mjs";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { readExecutionProfile } from "./execution-profile.mjs";

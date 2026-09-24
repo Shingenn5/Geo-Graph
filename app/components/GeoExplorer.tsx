@@ -10,6 +10,10 @@ import { collectAreaEvidence } from "../lib/selection/area-evidence";
 import type { AreaEvidence, PointLookup } from "../lib/selection/area-evidence";
 import { CORE_MANIFEST } from "../lib/core/manifest";
 import { LAS_LIMITS, parseLas } from "../lib/logs/las";
+import { BoundedCache, cachedJson, coordinateQuery } from "../lib/viewer/cache";
+import { OVERTURE_BUILDINGS } from "../lib/viewer/sources";
+import { hasLayerCoverage } from "../lib/viewer/transition";
+import { recordMetric } from "../lib/viewer/metrics";
 import type { ParsedWellLog } from "../lib/logs/las";
 
 type Unit = { map_id:number; source_id:number; name:string; strat_name:string; lith:string; descrip:string; color:string; best_int_name:string; t_int_name:string; b_int_name:string };
@@ -55,9 +59,9 @@ const UINTA_PILOT_POINT:[number,number]=[-109.99532020981788,40.31458853576911];
 
 function buildingFromFeature(feature:MapGeoJSONFeature):Building {
   const p=feature.properties??{};
-  const rawHeight=Number(p.render_height??p.height), levels=Number(p.levels);
+  const rawHeight=p.render_height==null&&p.height==null?NaN:Number(p.render_height??p.height), levels=p.levels==null&&p.num_floors==null?NaN:Number(p.levels??p.num_floors);
   const fallback=Number.isFinite(levels)?levels*3.2:6;
-  return {name:String(p.name||p.class||"Building"),height:`${Math.round(Number.isFinite(rawHeight)?rawHeight:fallback)} m${Number.isFinite(rawHeight)?"":" estimated"}`,levels:Number.isFinite(levels)?String(levels):"Not mapped",source:"OpenStreetMap via OpenFreeMap"};
+  return {name:String(p.name||p["@name"]||p.class||"Building"),height:`${Math.round(Number.isFinite(rawHeight)?rawHeight:fallback)} m${Number.isFinite(rawHeight)?"":" estimated"}`,levels:Number.isFinite(levels)?String(levels):"Not mapped",source:feature.source==="overture"?"Overture Maps / source contributors (inspection tiles)":"OpenStreetMap via OpenFreeMap"};
 }
 
 function escapeHtml(value:unknown){
@@ -65,8 +69,15 @@ function escapeHtml(value:unknown){
 }
 
 export default function GeoExplorer(){
+  const coverage=useRef(new Map<string,string>());
+  const viewKey=(m:GLMap)=>`${m.getCenter().lng.toFixed(5)},${m.getCenter().lat.toFixed(5)},${m.getZoom().toFixed(3)},${m.getBearing().toFixed(1)},${m.getPitch().toFixed(1)}`;
+  const lookupCache=useRef(new BoundedCache<unknown>(48));
+  const [layerStatus,setLayerStatus]=useState("");
+  const [displaySurface,setDisplaySurface]=useState<SurfaceMode>("Natural"),[displayBase,setDisplayBase]=useState<"satellite"|"topo">("satellite");
   const container=useRef<HTMLDivElement>(null), map=useRef<GLMap|null>(null), request=useRef<AbortController|null>(null), searchRequest=useRef<AbortController|null>(null), inspector=useRef<HTMLElement|null>(null), selectingRef=useRef(false), areaModeRef=useRef(false), areaFirst=useRef<[number,number]|null>(null), terrainRevealDone=useRef(true);
   const [ready,setReady]=useState(false),[mode,setMode]=useState<ViewMode>("TERRAIN"),[zoom,setZoom]=useState(10.5),[surfaceMode,setSurfaceMode]=useState<SurfaceMode>("Natural"),[base,setBase]=useState<"satellite"|"topo">("satellite"),[contours,setContours]=useState(false),[faults,setFaults]=useState(false),[borders,setBorders]=useState(true),[buildings,setBuildings]=useState(false);
+  const overtureEnabledRef=useRef(false);
+  const [overtureEnabled,setOvertureEnabled]=useState(false),[buildingStatus,setBuildingStatus]=useState("");
   const [aerialEnabled,setAerialEnabled]=useState(false);
   const [query,setQuery]=useState(""),[places,setPlaces]=useState<Place[]>([]),[searching,setSearching]=useState(false),[searchError,setSearchError]=useState("");
   const [mapCenter,setMapCenter]=useState<[number,number]>([-112.112,36.106]),[mapPlace,setMapPlace]=useState<MapPlace|null>(null);
@@ -127,13 +138,11 @@ export default function GeoExplorer(){
     const selection=map.current?.getSource("selection") as GeoJSONSource|undefined;
     selection?.setData({type:"Feature",properties:{},geometry:{type:"Point",coordinates:[lng,lat]}});
     await Promise.allSettled([
-      fetch(`/api/geology?lng=${lng}&lat=${lat}`,{signal:controller.signal})
-        .then(async response=>{if(!response.ok)throw new Error();return response.json() as Promise<GeologyResult>;})
+      cachedJson<GeologyResult>(lookupCache.current,`/api/geology?${coordinateQuery(lng,lat)}`,controller.signal)
         .then(data=>{if(!controller.signal.aborted)setResult(data);})
         .catch(()=>{if(!controller.signal.aborted)setError("Geology lookup is unavailable. Try again shortly.");})
         .finally(()=>{if(!controller.signal.aborted)setLoading(false);}),
-      fetch(`/api/soil?lng=${lng}&lat=${lat}`,{signal:controller.signal})
-        .then(async response=>{if(!response.ok)throw new Error();return response.json() as Promise<SoilResult>;})
+      cachedJson<SoilResult>(lookupCache.current,`/api/soil?${coordinateQuery(lng,lat)}`,controller.signal)
         .then(data=>{if(!controller.signal.aborted)setSoil(data.soil);})
         .catch(()=>{if(!controller.signal.aborted)setSoilError("USDA soil survey lookup is unavailable. Try again shortly.");})
         .finally(()=>{if(!controller.signal.aborted)setSoilLoading(false);})
@@ -285,7 +294,8 @@ export default function GeoExplorer(){
         setWorkerUrl(`${window.location.origin}/maplibre/maplibre-gl-worker.mjs`);
         const contourDem=new contourModule.default.DemSource({url:"https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png",encoding:"terrarium",maxzoom:15,worker:true,cacheSize:120,timeoutMs:10_000});
         contourDem.setupMaplibre(maplibre);
-        const m=new Map({container:container.current,center:[-112.112,36.106],zoom:10.5,pitch:55,bearing:-28,maxZoom:18,maxPitch:75,centerClampedToGround:true,aroundCenter:true,attributionControl:false,canvasContextAttributes:{antialias:true},style:{version:8,projection:{type:"mercator"},glyphs:"https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf",sources:{
+        const mapStarted=performance.now();
+        const m=new Map({maxTileCacheSize:96,container:container.current,center:[-112.112,36.106],zoom:10.5,pitch:55,bearing:-28,maxZoom:18,maxPitch:75,centerClampedToGround:true,aroundCenter:true,attributionControl:false,canvasContextAttributes:{antialias:true},style:{version:8,projection:{type:"mercator"},glyphs:"https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf",sources:{
           satellite:{type:"raster",tiles:["https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"],tileSize:256,maxzoom:19,attribution:"Imagery © Esri, Maxar, Earthstar Geographics, and the GIS User Community"},
           aerial:{type:"raster",tiles:["https://imagery.nationalmap.gov/arcgis/rest/services/USGSNAIPPlus/ImageServer/exportImage?bbox={bbox-epsg-3857}&bboxSR=3857&imageSR=3857&size=512%2C512&format=png32&transparent=true&f=image"],tileSize:512,minzoom:12,maxzoom:19,bounds:[-125,24,-66,50],attribution:'High-resolution U.S. aerial imagery: <a href="https://imagery.nationalmap.gov/arcgis/rest/services/USGSNAIPPlus/ImageServer">USGS, USDA, The National Map</a>'},
           topo:{type:"raster",tiles:["https://basemap.nationalmap.gov/arcgis/rest/services/USGSTopo/MapServer/tile/{z}/{y}/{x}"],tileSize:256,maxzoom:16,attribution:"Topography: USGS (United States)"},
@@ -310,6 +320,8 @@ export default function GeoExplorer(){
           {id:"soil-survey",type:"raster",source:"soilSurvey",minzoom:5,layout:{visibility:"none"},paint:{"raster-opacity":0.82,"raster-fade-duration":180,"raster-resampling":"linear"}},
           {id:"terrain-contours",type:"line",source:"contours","source-layer":"contours",minzoom:8,layout:{visibility:"none","line-cap":"round","line-join":"round"},paint:{"line-color":"#f5edcf","line-opacity":["interpolate",["linear"],["zoom"],8,0.08,10,0.18,12,0.32,15,0.44],"line-width":["interpolate",["linear"],["zoom"],8,["match",["get","level"],1,0.55,0.25],15,["match",["get","level"],1,1.15,0.65]]}},
           {id:"faults",type:"raster",source:"faults",layout:{visibility:"none"}},
+          {id:"context-waterways",type:"line",source:"openfreemap","source-layer":"waterway",minzoom:9,paint:{"line-color":"#8dd3e5","line-opacity":0.65,"line-width":["interpolate",["linear"],["zoom"],9,0.5,15,1.5]}},
+          {id:"context-roads",type:"line",source:"openfreemap","source-layer":"transportation",minzoom:10,filter:["in",["get","class"],["literal",["motorway","trunk","primary","secondary","tertiary"]]],paint:{"line-color":"#fff1ca","line-opacity":0.6,"line-width":["interpolate",["linear"],["zoom"],10,0.5,15,1.8]}},
           {id:"country-border-casing",type:"line",source:"openfreemap","source-layer":"boundary",maxzoom:12,filter:["==",["get","admin_level"],2],paint:{"line-color":"#142f38","line-opacity":0.8,"line-width":["interpolate",["linear"],["zoom"],0,1.8,6,3,12,4]}},
           {id:"country-borders",type:"line",source:"openfreemap","source-layer":"boundary",maxzoom:12,filter:["==",["get","admin_level"],2],paint:{"line-color":"#ffe08a","line-opacity":0.95,"line-width":["interpolate",["linear"],["zoom"],0,0.7,6,1.4,12,2]}},
           {id:"state-borders",type:"line",source:"openfreemap","source-layer":"boundary",minzoom:3,maxzoom:10,filter:["==",["get","admin_level"],4],paint:{"line-color":"#fff3d0","line-opacity":["interpolate",["linear"],["zoom"],3,0.35,7,0.7,10,0.35],"line-width":["interpolate",["linear"],["zoom"],3,0.5,7,1.2]}},
@@ -327,9 +339,10 @@ export default function GeoExplorer(){
           {id:"selection-halo",type:"circle",source:"selection",paint:{"circle-radius":20,"circle-color":"rgba(255,189,74,0.2)","circle-stroke-color":"#ffbd4a","circle-stroke-width":3,"circle-pitch-alignment":"map"}},
           {id:"selection-core",type:"circle",source:"selection",paint:{"circle-radius":4,"circle-color":"#fff","circle-stroke-color":"#0b3340","circle-stroke-width":2,"circle-pitch-alignment":"map"}},
         ],terrain:{source:"terrain",exaggeration:1},sky:{"sky-color":"#8fb9c7","horizon-color":"#dce9e6","fog-color":"#d7e2de","fog-ground-blend":0.18,"horizon-fog-blend":0.72,"sky-horizon-blend":0.84,"atmosphere-blend":0.32}}});
+        m.on("sourcedata",event=>{if(event.sourceId&&event.coord)coverage.current.set(event.sourceId,viewKey(m));});
         map.current=m;m.addControl(new NavigationControl({visualizePitch:true}),"top-right");m.addControl(new ScaleControl(),"bottom-left");m.addControl(new AttributionControl({compact:true}),"bottom-right");
         m.setCenterClampedToGround(true);
-        m.on("load",()=>{m.setSourceTileLodParams(6,5,"satellite");m.setSourceTileLodParams(6,3,"aerial");m.setSourceTileLodParams(6,4,"terrain");m.setSourceTileLodParams(6,4,"hillshade");setReady(true);});m.on("move",()=>{const z=m.getZoom();setZoom(z);if(z<=GLOBE_ENTER_ZOOM)terrainRevealDone.current=false;setMode(current=>z<=GLOBE_ENTER_ZOOM?"GLOBE":z>=TERRAIN_ENTER_ZOOM?"TERRAIN":current);});
+        m.on("load",()=>{m.setSourceTileLodParams(6,5,"satellite");m.setSourceTileLodParams(6,3,"aerial");m.setSourceTileLodParams(6,4,"terrain");m.setSourceTileLodParams(6,4,"hillshade");recordMetric("maplibre-initial-ready",mapStarted);setReady(true);});m.on("moveend",()=>{const z=m.getZoom();setZoom(z);if(z<=GLOBE_ENTER_ZOOM)terrainRevealDone.current=false;setMode(current=>z<=GLOBE_ENTER_ZOOM?"GLOBE":z>=TERRAIN_ENTER_ZOOM?"TERRAIN":current);});
         m.on("zoomend",()=>{const z=m.getZoom();if(!terrainRevealDone.current&&z>=9&&m.getPitch()<50){terrainRevealDone.current=true;m.easeTo({pitch:55,bearing:-22,duration:900});}});
         m.on("moveend",()=>m.setCenterClampedToGround(true));
         m.on("idle",()=>setSceneLoading(false));
@@ -354,7 +367,7 @@ export default function GeoExplorer(){
             setArea(rectangle.selection);setAreaError("");setSelectionMode(false);
             return;
           }
-          const hits=m.queryRenderedFeatures(e.point,{layers:["3d-buildings"]});
+          const hits=m.queryRenderedFeatures(e.point,{layers:m.getLayer("overture-buildings")&&overtureEnabledRef.current?["overture-buildings"]:["3d-buildings"]});
           void inspectGround(location.lng,location.lat,hits.length?buildingFromFeature(hits[0]):null);
           if(m.getZoom()<12){
             terrainRevealDone.current=true;
@@ -391,7 +404,40 @@ export default function GeoExplorer(){
     return()=>{m.off("moveend",locate);window.clearTimeout(initial);if(timer!==undefined)window.clearTimeout(timer);controller?.abort();};
   },[ready]);
 
-  useEffect(()=>{const m=map.current;if(!m||!ready)return;const terrainActive=mode==="TERRAIN";const showUnderlay=terrainActive&&surfaceMode!=="Bare Earth";const underlayOpacity=surfaceMode==="Natural"?1:surfaceMode==="Geology"?0.42:0.5;if(terrainActive){m.setProjection({type:"mercator"});m.setTerrain({source:"terrain",exaggeration:1});}else{m.setTerrain(null);m.setProjection({type:"globe"});}m.setLayoutProperty("satellite","visibility",!terrainActive||showUnderlay&&base==="satellite"?"visible":"none");m.setLayoutProperty("aerial","visibility",showUnderlay&&base==="satellite"&&aerialEnabled?"visible":"none");m.setLayoutProperty("topo","visibility",showUnderlay&&base==="topo"?"visible":"none");m.setPaintProperty("satellite","raster-opacity",terrainActive?underlayOpacity:1);m.setPaintProperty("aerial","raster-opacity",underlayOpacity);m.setPaintProperty("satellite","raster-saturation",terrainActive&&surfaceMode!=="Natural"?-0.2:0.08);m.setPaintProperty("topo","raster-opacity",underlayOpacity);m.setLayoutProperty("terrain-material","visibility",terrainActive?"visible":"none");m.setPaintProperty("terrain-material","color-relief-opacity",surfaceMode==="Natural"?0:surfaceMode==="Bare Earth"?0.96:surfaceMode==="Geology"?0.1:0.07);m.setLayoutProperty("terrain-shade","visibility",terrainActive?"visible":"none");m.setPaintProperty("terrain-shade","hillshade-exaggeration",surfaceMode==="Bare Earth"?0.5:["interpolate",["linear"],["zoom"],5,0.28,11,0.2,15,0.08,18,0.03]);m.setPaintProperty("terrain-contours","line-color",surfaceMode==="Bare Earth"?"#263f42":"#f5edcf");m.setLayoutProperty("terrain-contours","visibility",terrainActive&&contours?"visible":"none");m.setLayoutProperty("geology","visibility",terrainActive&&surfaceMode==="Geology"?"visible":"none");m.setLayoutProperty("soil-survey","visibility",terrainActive&&surfaceMode==="Soil"?"visible":"none");m.setLayoutProperty("faults","visibility",terrainActive&&faults?"visible":"none");m.setLayoutProperty("country-border-casing","visibility",borders?"visible":"none");m.setLayoutProperty("country-borders","visibility",borders?"visible":"none");m.setLayoutProperty("state-borders","visibility",borders?"visible":"none");m.setLayoutProperty("3d-buildings","visibility",terrainActive&&buildings?"visible":"none");m.setCenterClampedToGround(true);},[ready,mode,surfaceMode,base,aerialEnabled,contours,faults,borders,buildings]);
+
+  /* eslint-disable react-hooks/set-state-in-effect -- Synchronizes pending/committed UI with the external map renderer. */
+  useEffect(()=>{
+    const m=map.current;if(!m||!ready)return;
+    if(surfaceMode===displaySurface&&base===displayBase){setLayerStatus("");return;}
+    const started=performance.now();
+    const center=m.getCenter();
+    if((surfaceMode==="Soil"||base==="topo")&&(center.lng< -180||center.lng> -65||center.lat<17||center.lat>72)){
+      setLayerStatus("This layer covers the U.S. Previous view retained.");return;
+    }
+    const targets:string[]=surfaceMode==="Bare Earth"?[]:[base==="topo"?"topo":"satellite",...(surfaceMode==="Geology"?["geology"]:surfaceMode==="Soil"?["soil-survey"]:[])];
+    const sourceFor=(layer:string)=>layer==="soil-survey"?"soilSurvey":layer;
+    let stopped=false;
+    const staged: {id:string;visibility:"visible"|"none";opacity:number}[]=[];
+    let timer:ReturnType<typeof setTimeout>|undefined=undefined;
+    const clear=()=>{m.off("sourcedata",check);m.off("render",check);m.off("error",failed);clearTimeout(timer);};
+    const commit=()=>{if(stopped)return;stopped=true;clear();setDisplaySurface(surfaceMode);setDisplayBase(base);setLayerStatus("");recordMetric("maplibre-layer-"+surfaceMode,started);};
+    const restore=()=>{for(const item of staged)if(m.getLayer(item.id)){m.setLayoutProperty(item.id,"visibility",item.visibility??"visible");m.setPaintProperty(item.id,"raster-opacity",item.opacity??1);}};
+    const reject=()=>{if(stopped)return;stopped=true;clear();restore();setLayerStatus(`${surfaceMode} unavailable here. Previous view retained.`);recordMetric("maplibre-layer-failed-"+surfaceMode,started);};
+    function check(){if(!stopped&&hasLayerCoverage(targets.map(sourceFor),viewKey(m!),coverage.current,id=>m!.isSourceLoaded(id)))commit();}
+    function failed(event:unknown){if(targets.map(sourceFor).includes((event as {sourceId:string}).sourceId))reject();}
+    if(!targets.length||mode==="GLOBE"){commit();return;}
+    setLayerStatus(`Loading ${surfaceMode==="Natural"?base:surfaceMode}…`);
+    for(const target of targets){
+      if(m.getLayoutProperty(target,"visibility")!=="none")continue;
+      staged.push({id:target,visibility:m.getLayoutProperty(target,"visibility")==="none"?"none":"visible",opacity:Number(m.getPaintProperty(target,"raster-opacity")??1)});
+      m.setPaintProperty(target,"raster-opacity-transition",{duration:180,delay:0});
+      m.setPaintProperty(target,"raster-opacity",0.001);m.setLayoutProperty(target,"visibility","visible");
+    }
+    m.on("sourcedata",check);m.on("render",check);m.on("error",failed);
+    timer=setTimeout(reject,12000);m.triggerRepaint();
+    return()=>{clear();if(!stopped){stopped=true;restore();}};
+  },[ready,surfaceMode,base,displaySurface,displayBase,mode]);
+  useEffect(()=>{const m=map.current;if(!m||!ready)return;const terrainActive=mode==="TERRAIN";const showUnderlay=terrainActive&&displaySurface!=="Bare Earth";const underlayOpacity=displaySurface==="Natural"?1:displaySurface==="Geology"?0.42:0.5;if(terrainActive){m.setProjection({type:"mercator"});m.setTerrain({source:"terrain",exaggeration:1});}else{m.setTerrain(null);m.setProjection({type:"globe"});}m.setLayoutProperty("satellite","visibility",!terrainActive||showUnderlay&&displayBase==="satellite"?"visible":"none");m.setLayoutProperty("aerial","visibility",showUnderlay&&displayBase==="satellite"&&aerialEnabled?"visible":"none");m.setLayoutProperty("topo","visibility",showUnderlay&&displayBase==="topo"?"visible":"none");m.setPaintProperty("satellite","raster-opacity",terrainActive?underlayOpacity:1);m.setPaintProperty("aerial","raster-opacity",underlayOpacity);m.setPaintProperty("satellite","raster-saturation",terrainActive&&displaySurface!=="Natural"?-0.2:0.08);m.setPaintProperty("topo","raster-opacity",underlayOpacity);m.setLayoutProperty("terrain-material","visibility",terrainActive?"visible":"none");m.setPaintProperty("terrain-material","color-relief-opacity",displaySurface==="Natural"?0:displaySurface==="Bare Earth"?0.96:displaySurface==="Geology"?0.1:0.07);m.setLayoutProperty("terrain-shade","visibility",terrainActive?"visible":"none");m.setPaintProperty("terrain-shade","hillshade-exaggeration",displaySurface==="Bare Earth"?0.5:["interpolate",["linear"],["zoom"],5,0.28,11,0.2,15,0.08,18,0.03]);m.setPaintProperty("terrain-contours","line-color",displaySurface==="Bare Earth"?"#263f42":"#f5edcf");m.setLayoutProperty("terrain-contours","visibility",terrainActive&&contours?"visible":"none");m.setPaintProperty("geology","raster-opacity",0.76);m.setPaintProperty("soil-survey","raster-opacity",0.82);m.setLayoutProperty("geology","visibility",terrainActive&&displaySurface==="Geology"?"visible":"none");m.setLayoutProperty("soil-survey","visibility",terrainActive&&displaySurface==="Soil"?"visible":"none");m.setLayoutProperty("faults","visibility",terrainActive&&faults?"visible":"none");m.setLayoutProperty("country-border-casing","visibility",borders?"visible":"none");m.setLayoutProperty("country-borders","visibility",borders?"visible":"none");m.setLayoutProperty("state-borders","visibility",borders?"visible":"none");m.setLayoutProperty("3d-buildings","visibility",terrainActive&&buildings&&!overtureEnabled?"visible":"none");m.setCenterClampedToGround(true);},[ready,mode,displaySurface,displayBase,aerialEnabled,contours,faults,borders,buildings,overtureEnabled]);
 
   useEffect(()=>{
     const m=map.current;
@@ -412,6 +458,25 @@ export default function GeoExplorer(){
     };
   },[ready,pbrCanRender]);
 
+  useEffect(()=>{
+    const m=map.current;if(!m||!ready)return;
+    overtureEnabledRef.current=overtureEnabled;
+    let disposed=false;
+    if(!overtureEnabled){if(m.getLayer("overture-buildings"))m.setLayoutProperty("overture-buildings","visibility","none");return;}
+    setBuildingStatus("Loading Overture building detail…");
+    import("pmtiles").then(async({Protocol})=>{
+      const maplibre=await import("maplibre-gl");if(disposed)return;
+      if(!m.getSource("overture")){
+        const protocol=new Protocol();maplibre.addProtocol("pmtiles",protocol.tile);
+        m.addSource("overture",{type:"vector",url:`pmtiles://${OVERTURE_BUILDINGS}`,minzoom:14,maxzoom:14,attribution:'© OpenStreetMap · <a href="https://docs.overturemaps.org/attribution">Overture Maps Foundation</a>'});
+        m.addLayer({id:"overture-buildings",type:"fill-extrusion",source:"overture","source-layer":"building",minzoom:14,filter:["!=",["get","is_underground"],true],paint:{"fill-extrusion-color":"#b6c7c9","fill-extrusion-height":["coalesce",["get","height"],["*",["coalesce",["get","num_floors"],2],3.2]],"fill-extrusion-base":["coalesce",["get","min_height"],0],"fill-extrusion-opacity":0.9}},"selection-halo");
+      }
+      m.setLayoutProperty("overture-buildings","visibility","visible");setBuildingStatus("Overture 2026-09-23 · close zoom only · missing heights estimated. Inspection tiles, coverage varies.");
+    }).catch(()=>{if(!disposed){setBuildingStatus("Overture unavailable. Standard buildings remain available.");setOvertureEnabled(false);}});
+    return()=>{disposed=true;};
+  },[ready,overtureEnabled]);
+
+  /* eslint-enable react-hooks/set-state-in-effect */
   function togglePbrStudy(){
     const next=!pbrEnabled;
     setPbrEnabled(next);
@@ -554,6 +619,6 @@ export default function GeoExplorer(){
     {useCase==="Wellsite"&&<section className="log-panel"><div className="section-heading"><div><p className="eyebrow">LOCAL WELL LOG</p><h2>Inspect a depth curve</h2></div><span className="selection-count">LAS 2.0</span></div><p>Open a LAS file from your computer. It stays in this browser session; no upload occurs. Its identity and depth reference are not verified against nearby public wells.</p><label className="log-import" htmlFor="las-file">Choose LAS file<input id="las-file" type="file" accept=".las,text/plain" onChange={importLog}/></label>{logError&&<p role="alert" className="error">{logError}</p>}{localLog&&<><p><strong>{logName}</strong> · {localLog.rows.length.toLocaleString()} rows · depth in {localLog.depthUnit}</p><label htmlFor="log-curve">Curve</label><select id="log-curve" value={logCurve} onChange={event=>setLogCurve(Number(event.target.value))}>{localLog.curves.map((curve,index)=><option key={`${curve.mnemonic}-${index}`} value={index}>{curve.mnemonic} {curve.unit?`(${curve.unit})`:""}</option>)}</select>{logPreview?<div className="log-chart"><div><span>{logPreview.minDepth} {localLog.depthUnit}</span><svg viewBox="0 0 160 180" role="img" aria-label={`${localLog.curves[logCurve]?.mnemonic||"Selected curve"} versus source-reported depth`}><path d={logPreview.path} fill="none" stroke="#157e83" strokeWidth="2" strokeLinejoin="round"/></svg><span>{logPreview.maxDepth} {localLog.depthUnit}</span></div><small>{logPreview.minValue.toPrecision(4)}–{logPreview.maxValue.toPrecision(4)} {localLog.curves[logCurve]?.unit||"source units"}</small></div>:<p>No values were recorded for this curve.</p>}<p>{localLog.depthIssues.length?`${localLog.depthIssues.length} duplicate or direction-changing depth rows flagged. `:""}Depth reference (MD/TVD) and vertical datum are unknown; verify them before correlating this log with a core or another well.</p><button className="mini-export" onClick={()=>{setLocalLog(null);setLogName("");setLogError("");}}>Clear local log</button></>}</section>}
     {soil&&soil.horizons.length>0&&<section className="horizon-dashboard"><div className="section-heading"><div><p className="eyebrow">SOIL PROFILE</p><h2>{useCase} depth profile</h2></div><span className="selection-count">{soil.horizons.length} layers</span></div><div className="horizon-list">{soil.horizons.map((horizon,index)=><article key={horizon.key}><div className="horizon-swatch" style={{opacity:Math.max(.35,1-index*.1)}}/><div><strong>{horizon.name||`Layer ${index+1}`}</strong><span>{horizon.topCm??"?"}–{horizon.bottomCm??"?"} cm · {horizon.texture||"Texture not rated"}</span></div><dl>{horizonMetrics(horizon).map(([label,value])=><div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl></article>)}</div></section>}
     {point&&<section className="report-export"><div><p className="eyebrow">FIELD REPORT</p><h2>Take this survey with you.</h2><p>Export the selected point, available soil, geology, nearby well records, and their sources. Missing evidence remains explicit.</p></div><div className="survey-export-actions"><button className="export-button" onClick={()=>exportSurvey("html")}>⇩ Printable survey</button><button onClick={()=>exportSurvey("geojson")}>GeoJSON</button><button onClick={()=>exportSurvey("json")}>JSON</button>{soil&&<button onClick={exportSoilReport}>Soil profile</button>}</div></section>}
-    <section className="coverage"><p>Soils: USDA NRCS Soil Data Access / SSURGO. Terrain: Mapterhorn and source contributors; contours: Mapzen and source contributors. U.S. aerial imagery: USGS, USDA, The National Map. Geology: Macrostrat and original survey authors. Coverage and detail vary.</p></section>
-  </aside><div className="map-shell"><div ref={container} className="map" aria-label="Interactive 3D terrain survey"/>{!ready&&!mapError&&<div className="map-message" role="status">Loading 3D terrain…</div>}{sceneLoading&&<div className="scene-loading" role="status">Loading elevation and imagery…</div>}{mapError&&<div className="map-message error" role="alert">{mapError}<button onClick={()=>setMapError("")}>×</button></div>}<div className="mode-chip"><span>{mode} · {mode==="GLOBE"?"GLOBAL":surfaceMode.toUpperCase()}</span><strong>{mode==="GLOBE"?"Global overview":"Orbit the terrain and inspect the ground"}</strong><small className="map-context" aria-live="polite">Map center · {mapContext}</small></div><div className="camera-tools"><button disabled={!ready} className="primary-camera" aria-pressed={selecting&&!areaMode} onClick={()=>selecting&&!areaMode?setSelectionMode(false):beginSelection("point")}>{selecting&&!areaMode?"× Cancel point":"⌖ Select ground"}</button><button disabled={!ready} aria-pressed={selecting&&areaMode} onClick={()=>selecting&&areaMode?setSelectionMode(false):beginSelection("area")}>{selecting&&areaMode?"× Cancel area":"▱ Select area"}</button>{selecting&&!areaMode&&zoom>=12&&<button onClick={selectCenter}>Inspect map center</button>}{point&&<button onClick={returnToSelection}>↩ Selection</button>}<button disabled={!ready} aria-pressed={zoom<4.5} aria-label="World view, keep this location centered" onClick={()=>navigateToScale("world")}>◎ World</button><button disabled={!ready} aria-pressed={zoom>=4.5&&zoom<9} aria-label="Regional view, keep this location centered" onClick={()=>navigateToScale("region")}>◫ Region</button><button disabled={!ready} aria-pressed={zoom>=9} aria-label="Ground view, keep this location centered" onClick={()=>navigateToScale("ground")}>◢ Ground</button></div>{point&&<button className="selection-summary" onClick={()=>{inspector.current?.scrollIntoView({behavior:"smooth",block:"start"});inspector.current?.focus({preventScroll:true});}}><span>Selected {point[1].toFixed(5)}, {point[0].toFixed(5)} · {soilLoading?"Reading soil survey…":soil?soil.mapUnitName:soilError?"Soil lookup unavailable":"No mapped soil at this point"}</span><strong>View details ↓</strong></button>}<div className={`map-help${selecting?" selecting":""}`} role="status">{selecting?(zoom<12?"Click an area to move closer. Esc cancels.":areaMode?(areaAwaiting?"Click the opposite corner to complete the area. Esc cancels.":"Click the first corner of an area. Esc cancels."):"Click ground to inspect it, or inspect the map center. Esc cancels."):"Drag to pan · Right-drag to tilt · Click to inspect"}</div></div></div></main>;
+    <section className="coverage"><label><input type="checkbox" checked={overtureEnabled} onChange={event=>{setOvertureEnabled(event.target.checked);setBuildings(true);}}/> Overture building detail · trial</label>{buildingStatus&&<p role="status">{buildingStatus}</p>}<p>Soils: USDA NRCS Soil Data Access / SSURGO. Terrain: Mapterhorn and source contributors; contours: Mapzen and source contributors. U.S. aerial imagery: USGS, USDA, The National Map. Geology: Macrostrat and original survey authors. Coverage and detail vary.</p></section>
+  </aside><div className="map-shell"><div ref={container} className="map" aria-label="Interactive 3D terrain survey"/>{!ready&&!mapError&&<div className="map-message" role="status">Loading 3D terrain…</div>}{layerStatus&&<div className="layer-status" role="status">{layerStatus}</div>}{sceneLoading&&<div className="scene-loading" role="status">Loading elevation and imagery…</div>}{mapError&&<div className="map-message error" role="alert">{mapError}<button onClick={()=>setMapError("")}>×</button></div>}<div className="mode-chip"><span>{mode} · {mode==="GLOBE"?"GLOBAL":displaySurface.toUpperCase()}</span><strong>{mode==="GLOBE"?"Global overview":"Orbit the terrain and inspect the ground"}</strong><small className="map-context" aria-live="polite">Map center · {mapContext}</small></div><div className="camera-tools"><button disabled={!ready} className="primary-camera" aria-pressed={selecting&&!areaMode} onClick={()=>selecting&&!areaMode?setSelectionMode(false):beginSelection("point")}>{selecting&&!areaMode?"× Cancel point":"⌖ Select ground"}</button><button disabled={!ready} aria-pressed={selecting&&areaMode} onClick={()=>selecting&&areaMode?setSelectionMode(false):beginSelection("area")}>{selecting&&areaMode?"× Cancel area":"▱ Select area"}</button>{selecting&&!areaMode&&zoom>=12&&<button onClick={selectCenter}>Inspect map center</button>}{point&&<button onClick={returnToSelection}>↩ Selection</button>}<button disabled={!ready} aria-pressed={zoom<4.5} aria-label="World view, keep this location centered" onClick={()=>navigateToScale("world")}>◎ World</button><button disabled={!ready} aria-pressed={zoom>=4.5&&zoom<9} aria-label="Regional view, keep this location centered" onClick={()=>navigateToScale("region")}>◫ Region</button><button disabled={!ready} aria-pressed={zoom>=9} aria-label="Ground view, keep this location centered" onClick={()=>navigateToScale("ground")}>◢ Ground</button></div>{point&&<button className="selection-summary" onClick={()=>{inspector.current?.scrollIntoView({behavior:"smooth",block:"start"});inspector.current?.focus({preventScroll:true});}}><span>Selected {point[1].toFixed(5)}, {point[0].toFixed(5)} · {soilLoading?"Reading soil survey…":soil?soil.mapUnitName:soilError?"Soil lookup unavailable":"No mapped soil at this point"}</span><strong>View details ↓</strong></button>}<div className={`map-help${selecting?" selecting":""}`} role="status">{selecting?(zoom<12?"Click an area to move closer. Esc cancels.":areaMode?(areaAwaiting?"Click the opposite corner to complete the area. Esc cancels.":"Click the first corner of an area. Esc cancels."):"Click ground to inspect it, or inspect the map center. Esc cancels."):"Drag to pan · Right-drag to tilt · Click to inspect"}</div></div></div></main>;
 }

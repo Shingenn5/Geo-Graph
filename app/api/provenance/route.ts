@@ -139,6 +139,14 @@ export async function GET(request: Request) {
     return Response.json({ error: "Provide valid lat and lng coordinates." }, { status: 400 });
   }
 
+  // The enhanced viewer only needs an elevation reference. Do not make that
+  // result wait on the independent (and often slower) imagery catalog.
+  if (params.get("scope") === "elevation") {
+    const elevation = await lookupElevation(lat, lng);
+    return Response.json({ elevation, generatedAt: new Date().toISOString() }, {
+      headers: { "Cache-Control": elevation.status === "error" ? "no-store" : "public, max-age=300" },
+    });
+  }
   const [imagery, elevation] = await Promise.all([lookupImagery(lat, lng), lookupElevation(lat, lng)]);
   const anyError = imagery.status === "error" || elevation.status === "error";
   const anyUsable = imagery.status === "ok" || imagery.status === "partial" || elevation.status === "ok" || elevation.status === "partial";
