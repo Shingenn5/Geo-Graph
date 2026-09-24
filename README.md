@@ -14,7 +14,7 @@ The [hosted Geo Graph preview](https://geo-graph-rocks.elliottdavis05.chatgpt.si
 
 The standard MapLibre viewer opens by default. Its layer changes retain the previous map while the next view loads. Search for a place or coordinates, click **Select ground** to inspect a point, or use **Select area** for an area survey. Optional buildings, contours, and the close-range material study are available in this viewer.
 
-Choose **Try enhanced 3D** to open the separate Cesium trial. It offers natural imagery, elevation coloring, mapped geology, soil map units, ESA WorldCover 2021, and a USGS 3DEP hillshade. You can orbit, pan, zoom, use place presets, toggle labels, and click terrain to inspect ground evidence. Return using **Standard viewer**.
+Choose **Try enhanced 3D** to open the separate Cesium trial. It offers natural imagery, elevation coloring, mapped geology, soil map units, ESA WorldCover 2021, and a USGS 3DEP hillshade. Drag to move across the ground, right-drag to tilt, and scroll to zoom. **World**, **Region**, **Ground**, zoom, and **North** controls keep the viewed location centered. You can also use place presets, toggle labels, and click terrain to inspect ground evidence. Return using **Standard viewer**.
 
 Both viewers offer **Clear imagery**, an optional Esri World Imagery (Clarity) archive view. Compare it with current imagery in remote regions; archived scenes may look clearer, older, or identical. It does not create detail beyond the source images. The enhanced viewer includes Patagonia, the Australian Outback, and the Sahara among its comparison locations.
 
