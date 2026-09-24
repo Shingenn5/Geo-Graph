@@ -1,8 +1,16 @@
 # Geo Graph
 
-Geo Graph is a React and MapLibre field survey workspace. It uses a globe at broad zoom, reveals three-dimensional terrain at regional scale, and lets users inspect published ground evidence at a selected location. The Uinta Basin pilot connects soil, surface geology, Utah oil and gas well records, and a separately sourced research core. It shows the evidence behind a result, including missing data and interpretation limits.
+Geo Graph is a field survey workspace for exploring terrain and inspecting mapped ground evidence. Its standard viewer uses MapLibre; an optional enhanced 3D trial uses Cesium. The Uinta Basin pilot connects soil, surface geology, Utah oil and gas well records, and a separately sourced research core. It shows the evidence behind a result, including missing data and interpretation limits.
 
 Country, state, and city labels help orient the map. The **World**, **Region**, and **Ground** controls change scale while keeping the current location centered. The map-center readout shows an approximate state and country when reverse geocoding is available, and coordinates otherwise.
+
+## Viewers
+
+The standard MapLibre viewer opens by default. Its layer changes retain the previous map while the next view loads. Search for a place or coordinates, click **Select ground** to inspect a point, or use **Select area** for an area survey. Optional buildings, contours, and the close-range material study are available in this viewer.
+
+Choose **Try enhanced 3D** to open the separate Cesium trial. It offers natural imagery, elevation coloring, mapped geology, soil map units, ESA WorldCover 2021, and a USGS 3DEP hillshade. You can orbit, pan, zoom, use place presets, toggle labels, and click terrain to inspect ground evidence. Return using **Standard viewer**.
+
+The trial still uses Re:Earth/Mapterhorn global terrain. USGS relief is a hillshade overlay, not a 3DEP terrain mesh. Imagery and thematic coverage vary by place, and cold layer loads depend on their source services. The Cesium trial supplements the standard viewer; it does not replace its area selection and well workflows. See the [viewer rollout notes](docs/viewer-rollout.md) for sources, performance measurements, and remaining quality gates.
 
 ## Run locally
 
@@ -43,7 +51,7 @@ The Wellsite view also links a [Utah Geological Survey Skyline 16 core log and c
 
 ## Published data and display
 
-- MapLibre globe, Mapterhorn terrain, and Esri World Imagery by default. USGS NAIP Plus aerial imagery is an optional U.S. overlay because its coverage and visual quality can vary; the Esri underlay remains visible when it is off or unavailable. Bare Earth and USGS topo provide non-satellite views.
+- Standard viewer: MapLibre globe, Mapterhorn terrain, and Esri World Imagery by default. USGS NAIP Plus aerial imagery is an optional U.S. overlay because its coverage and visual quality can vary; the Esri underlay remains visible when it is off or unavailable. Bare Earth and USGS topo provide non-satellite views. Enhanced 3D data sources and their coverage limits are listed in the [viewer rollout notes](docs/viewer-rollout.md).
 - Macrostrat mapped surface geology with original survey references, USDA NRCS SSURGO map-unit/component/horizon lookup, and USGS Quaternary fault display.
 - [UGRC Utah Oil Gas Wells](https://gis.utah.gov/products/sgid/energy/oil-gas-wells/) public surface locations, credited to UGRC SGID and Utah DNR-OGM. The API filters flagged confidential records and separates an empty result from an upstream failure.
 - Optional buildings, contour lines, and a close-range Three.js material study. The material study adds illustrative rock texture on steep DEM-derived terrain while preserving aerial imagery elsewhere; its visual materials are not a geological classification.
