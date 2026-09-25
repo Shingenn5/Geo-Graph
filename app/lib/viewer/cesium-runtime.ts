@@ -46,10 +46,20 @@ export function createScene(container: HTMLElement, callbacks: SceneCallbacks) {
     if(hit)lastFocus=C.Cartographic.fromCartesian(hit);
     return lastFocus;
   }
-  function moveTo(focus:C.Cartographic,range:number,heading=viewer.camera.heading,overhead=false){
-    const pitch=overhead?-C.Math.PI_OVER_TWO:viewer.camera.pitch<C.Math.toRadians(-80)||viewer.camera.pitch>C.Math.toRadians(-15)?C.Math.toRadians(-55):viewer.camera.pitch;
+  function moveTo(focus:C.Cartographic,range:number,heading=viewer.camera.heading){
     const ground=C.Cartesian3.fromRadians(focus.longitude,focus.latitude,focus.height);
-    viewer.camera.flyToBoundingSphere(new C.BoundingSphere(ground,0),{offset:new C.HeadingPitchRange(heading,pitch,Math.max(200,Math.min(25_000_000,range))),duration:1.1,complete:finishNavigation});
+    const distance=Math.max(200,Math.min(25_000_000,range));
+    if(distance>2_000_000){
+      const outward=C.Cartesian3.normalize(ground,new C.Cartesian3());
+      const destination=C.Cartesian3.multiplyByScalar(outward,C.Cartesian3.magnitude(ground)+distance,new C.Cartesian3());
+      const direction=C.Cartesian3.negate(outward,new C.Cartesian3());
+      const north=C.Cartesian3.subtract(C.Cartesian3.UNIT_Z,C.Cartesian3.multiplyByScalar(outward,C.Cartesian3.dot(C.Cartesian3.UNIT_Z,outward),new C.Cartesian3()),new C.Cartesian3());
+      if(C.Cartesian3.magnitudeSquared(north)<0.001)C.Cartesian3.subtract(C.Cartesian3.UNIT_Y,C.Cartesian3.multiplyByScalar(outward,C.Cartesian3.dot(C.Cartesian3.UNIT_Y,outward),new C.Cartesian3()),north);
+      viewer.camera.flyTo({destination,orientation:{direction,up:C.Cartesian3.normalize(north,north)},duration:1.1,complete:finishNavigation});
+    }else{
+      const pitch=viewer.camera.pitch<C.Math.toRadians(-80)||viewer.camera.pitch>C.Math.toRadians(-15)?C.Math.toRadians(-55):viewer.camera.pitch;
+      viewer.camera.flyToBoundingSphere(new C.BoundingSphere(ground,0),{offset:new C.HeadingPitchRange(heading,pitch,distance),duration:1.1,complete:finishNavigation});
+    }
     viewer.scene.requestRender();
   }
   function fly(longitude:number,latitude:number,range:number){
@@ -179,7 +189,7 @@ export function createScene(container: HTMLElement, callbacks: SceneCallbacks) {
   void surface("Natural");setLabels(true);void terrainReady;
   return {
     surface, labels:setLabels, fly,
-    scale(range:number){zoomFocus=undefined;moveTo(groundCenter(),range,viewer.camera.heading,range>1_000_000);},
+    scale(range:number){zoomFocus=undefined;moveTo(groundCenter(),range);},
     zoom,
     north(){moveTo(groundCenter(),currentRange(),0);},
     destroy(){disposed=true;viewer.canvas.removeEventListener("wheel",onWheel);gate.cancel();cancelWait?.();cancelAnimationFrame(fadeFrame);handler.destroy();viewer.destroy();},
