@@ -1,0 +1,206 @@
+/* On-demand terrain profile dock, chart, and mobile layout. */
+
+/* Compact analysis dock; no charting library or continuous map redraw. */
+
+.enhanced-viewer .camera-tools {
+  bottom: auto;
+  align-items: flex-start;
+  align-content: flex-start;
+}
+
+.enhanced-viewer .terrain-profile-panel {
+  position: absolute;
+  z-index: 2;
+  left: 18px;
+  right: 18px;
+  bottom: 34px;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 14px 18px;
+  border: 1px solid #a8c2c8;
+  border-radius: 12px;
+  background: #fbfdfd;
+  color: #183b46;
+  box-shadow: 0 5px 24px #0004;
+  max-height: 55%;
+  overflow: auto;
+}
+
+.profile-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.profile-heading h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.profile-heading h2 small {
+  font-weight: 400;
+  color: #607780;
+  font-size: 13px;
+  margin-left: 8px;
+}
+
+.profile-heading>div {
+  display: flex;
+  gap: 8px;
+}
+
+.terrain-profile-panel button {
+  border: 1px solid #b5cdd2;
+  border-radius: 6px;
+  background: #fff;
+  color: #126777;
+  padding: 7px 10px;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.terrain-profile-panel p {
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 10px 0 0;
+}
+
+.profile-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 26px;
+  margin: 12px 0 0;
+}
+
+.profile-stats dt {
+  font-size: 12px;
+  color: #59727a;
+}
+
+.profile-stats dd {
+  font-size: 15px;
+  font-weight: 700;
+  margin: 4px 0 0;
+}
+
+.profile-chart {
+  display: block;
+  width: 100%;
+  height: 145px;
+  touch-action: pan-y;
+}
+
+.profile-chart text {
+  font-size: 12px;
+  fill: #536a73;
+}
+
+.profile-grid {
+  stroke: #d3e0e3;
+  stroke-dasharray: 3 4;
+}
+
+.profile-scrubber {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 12px;
+  margin: 0;
+}
+
+.profile-scrubber input {
+  flex: 1;
+  min-width: 0;
+  accent-color: #127486;
+}
+
+.terrain-profile-panel .profile-position {
+  font-size: 13px;
+  margin: 5px 0;
+}
+
+.profile-footer {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  margin-top: 8px;
+  border-top: 1px solid #d4e1e4;
+  padding-top: 8px;
+}
+
+.terrain-profile-panel .profile-footer p {
+  font-size: 12px;
+  margin: 0;
+}
+
+.profile-footer a {
+  color: #126777;
+}
+
+.terrain-profile-panel .profile-warning {
+  color: #82451b;
+  background: #fff3dc;
+  padding: 8px;
+  border-radius: 5px;
+}
+
+.enhanced-viewer .camera-tools button[aria-pressed=true] {
+  background: #ffbd4a;
+  color: #132c35;
+}
+
+@media (max-width:700px) {
+  .enhanced-viewer.has-profile .workspace {
+    grid-template-rows: minmax(820px,105dvh) 1fr;
+  }
+
+  .enhanced-viewer .terrain-profile-panel {
+    left: 8px;
+    right: 8px;
+    padding: 12px;
+    max-height: 58%;
+    bottom: 32px;
+  }
+
+  .profile-heading h2 {
+    font-size: 16px;
+  }
+
+  .profile-heading h2 small {
+    display: none;
+  }
+
+  .profile-stats {
+    gap: 8px 16px;
+  }
+
+  .profile-stats dd {
+    font-size: 13px;
+  }
+
+  .profile-chart {
+    height: 125px;
+  }
+
+  .profile-chart text {
+    font-size: 20px;
+  }
+
+  .profile-footer {
+    align-items: flex-start;
+  }
+
+  .profile-heading {
+    gap: 4px;
+  }
+
+  .profile-heading>div {
+    gap: 4px;
+  }
+
+  .terrain-profile-panel button {
+    font-size: 12px;
+    padding: 7px;
+  }
+}

@@ -16,6 +16,7 @@ const eslintConfig = defineConfig([
     "outputs/**",
     "dist/**",
     "public/cesium/**",
+    "public/maplibre/**",
   ]),
   {
     files: ["components/ui/**/*.{ts,tsx}", "hooks/use-mobile.ts"],

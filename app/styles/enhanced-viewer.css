@@ -1,0 +1,166 @@
+/* Viewer switch, layer status, and Cesium trial presentation. */
+
+.viewer-trial-link {
+  color: #127486;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  margin-left: auto;
+}
+
+.layer-status {
+  position: absolute;
+  left: 22px;
+  bottom: 72px;
+  max-width: calc(100% - 44px);
+  padding: 10px 14px;
+  background: #fff8e5;
+  color: #443b1b;
+  border: 1px solid #dbc27e;
+  border-radius: 8px;
+  font-size: 12px;
+  z-index: 4;
+  box-shadow: 0 3px 16px #0002;
+}
+
+.enhanced-viewer .map>div,
+.enhanced-viewer .cesium-widget,
+.enhanced-viewer .cesium-widget canvas {
+  width: 100%;
+  height: 100%;
+}
+
+.enhanced-viewer .cesium-viewer-bottom {
+  font-size: 10px;
+  max-width: 90%;
+}
+
+.enhanced-viewer .trial-surfaces {
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+
+.enhanced-viewer .trial-surfaces button,
+.trial-place {
+  border: 1px solid #cbdcde;
+  border-radius: 8px;
+  background: white;
+  color: #234d59;
+  font-size: 12px;
+  padding: 9px 12px;
+}
+
+.enhanced-viewer .trial-surfaces button[aria-pressed=true] {
+  background: #127486;
+  color: white;
+  border-color: #127486;
+}
+
+.enhanced-viewer .trial-checkbox {
+  font-size: 12px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 16px;
+}
+
+.enhanced-viewer .trial-checkbox input {
+  width: auto;
+}
+
+.trial-facts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.trial-facts dd {
+  margin: 0;
+}
+
+.trial-facts dt {
+  color: #607780;
+}
+
+.enhanced-viewer h2 {
+  font-size: 17px;
+}
+
+.enhanced-viewer h3 {
+  font-size: 14px;
+  margin-top: 24px;
+}
+
+.enhanced-viewer .inspector p {
+  margin: 8px 0;
+}
+
+.enhanced-viewer .inspector small {
+  font-size: 11px;
+  color: #61747e;
+}
+
+.trial-place {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+  text-align: left;
+}
+
+@media (max-width:700px) {
+  .enhanced-viewer .header-note {
+    display: none;
+  }
+
+  .viewer-trial-link {
+    font-size: 11px;
+  }
+
+  .enhanced-viewer .workspace {
+    grid-template-columns: 1fr;
+    grid-template-rows: 55dvh 1fr;
+    height: auto;
+  }
+
+  .enhanced-viewer aside {
+    grid-row: 2;
+  }
+
+  .enhanced-viewer .map-shell {
+    grid-row: 1;
+  }
+
+  .enhanced-viewer .mode-chip {
+    max-width: 45%;
+    left: 12px;
+    top: 12px;
+  }
+
+  .enhanced-viewer .camera-tools {
+    top: 100px;
+  }
+
+  .enhanced-viewer .map-help {
+    font-size: 10px;
+    max-width: 90%;
+  }
+}
+
+.enhanced-viewer .mode-chip small {
+  display: block;
+  margin-top: 6px;
+  color: #d0e5e8;
+  font-size: 11px;
+}
+
+.enhanced-viewer .brand {
+  display: block;
+}
+
+.enhanced-viewer .brand small {
+  font-size: 11px;
+  letter-spacing: 0;
+  margin-top: 4px;
+}
