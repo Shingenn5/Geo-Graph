@@ -1,7 +1,7 @@
 import { strict as assert } from "node:assert";
 import { test } from "node:test";
 import { BoundedCache, coordinateQuery, cachedJson } from "./cache.ts";
-import { TransitionGate, hasLayerCoverage } from "./transition.ts";
+import { TransitionGate, hasLayerCoverage, TileCoverage } from "./transition.ts";
 
 test("cache evicts least recently used entries and expires old data", () => {
   const cache = new BoundedCache<number>(2);
@@ -23,11 +23,16 @@ test("aborted requests never return even cached results", async () => {
   const controller = new AbortController(); controller.abort();
   await assert.rejects(cachedJson(cache, "/test", controller.signal), { name: "AbortError" });
 });
-test("idle and unrelated or old-view tile events cannot establish target coverage",()=>{
-  const evidence=new Map([["satellite","view-a"],["geology","view-old"]]);
-  assert.equal(hasLayerCoverage(["geology"],"view-a",evidence,()=>true),false);
-  evidence.set("geology","view-a");
-  assert.equal(hasLayerCoverage(["geology"],"view-a",evidence,()=>false),false);
-  assert.equal(hasLayerCoverage(["geology"],"view-a",evidence,()=>true),true);
-  assert.equal(hasLayerCoverage(["geology","topo"],"view-a",evidence,()=>true),false);
+test("cached geographic coverage survives camera changes but rejects unrelated or coarse tiles",()=>{
+  const evidence=new TileCoverage();
+  const center={lng:-109.99532,lat:40.31459};
+  const tile=(z:number)=>({z,x:Math.floor((center.lng+180)/360*2**z),y:Math.floor((1-Math.asinh(Math.tan(center.lat*Math.PI/180))/Math.PI)/2*2**z)});
+  evidence.record("satellite",tile(16));
+  assert.equal(hasLayerCoverage(["geology"],center,16.2,evidence,()=>true),false);
+  evidence.record("geology",tile(14));
+  assert.equal(hasLayerCoverage(["geology"],center,16.2,evidence,()=>false),false);
+  assert.equal(hasLayerCoverage(["geology","satellite"],center,16.2,evidence,()=>true),true);
+  assert.equal(hasLayerCoverage(["geology"],{lng:0,lat:0},16.2,evidence,()=>true),false);
+  assert.equal(hasLayerCoverage(["geology","topo"],center,16.2,evidence,()=>true),false);
+  assert.equal(hasLayerCoverage(["satellite"],center,18,evidence,()=>true),false);
 });

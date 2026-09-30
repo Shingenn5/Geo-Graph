@@ -6,6 +6,10 @@ Country, state, and city labels help orient the map. The **World**, **Region**, 
 
 ## Quick start
 
+For an interview or presentation, use the [interview demo guide](docs/interview-demo.md).
+Run `npm run demo:prepare` once after the final edits, then double-click
+**Demo Geo Graph.cmd** to serve the production build at `http://127.0.0.1:8789`.
+
 The [hosted Geo Graph preview](https://geo-graph-rocks.elliottdavis05.chatgpt.site/) is currently available to the site owner. To run your own copy on Windows, install [Node.js 22.13 or newer](https://nodejs.org/), then double-click [Install Geo Graph.cmd](Install%20Geo%20Graph.cmd) and [Start Geo Graph.cmd](Start%20Geo%20Graph.cmd) from an extracted or cloned project folder. The launcher opens the app at `http://127.0.0.1:5173`.
 
 `main` is the repository's primary development branch. Local installation runs from your checkout; updating GitHub does not update an already deployed Site automatically. See [Run locally](#run-locally) for command-line setup and troubleshooting.
@@ -17,6 +21,21 @@ The standard MapLibre viewer opens by default. Its layer changes retain the prev
 Choose **Try enhanced 3D** to open the separate Cesium trial. It offers natural imagery, elevation coloring, mapped geology, soil map units, ESA WorldCover 2021, and a USGS 3DEP hillshade. Drag to move across the ground, right-drag to tilt, and scroll to zoom. **World**, **Region**, **Ground**, zoom, and **North** controls keep the viewed location centered. You can also use place presets, toggle labels, and click terrain to inspect ground evidence. Return using **Standard viewer**.
 
 Both viewers offer **Clear imagery**, an optional Esri World Imagery (Clarity) archive view. Compare it with current imagery in remote regions; archived scenes may look clearer, older, or identical. It does not create detail beyond the source images. The enhanced viewer includes Patagonia, the Australian Outback, and the Sahara among its comparison locations.
+
+Refreshing or switching viewers in the same browser tab restores the map location,
+approximate camera scale, compatible surface layer, labels, and selected point.
+Point evidence is fetched again rather than restoring an old report. Clear a point
+to remove it from the saved selection. Storage is local to the tab; area selections,
+profile charts, LAS files, and viewer-specific tools are not restored. Land cover
+and USGS relief fall back to Natural when switching to the standard viewer.
+
+In enhanced 3D, choose **Terrain profile**, then click two ground points (20 m–200 km apart). The A–B line produces an elevation chart with distance, lowest/highest heights, and sampled ascent/descent. Hover the chart or use its keyboard-accessible position slider to locate a sample on the globe. **Export CSV** saves coordinates, distances, heights, grades, source, datum, and sampling time. Escape or **Cancel** stops selection; **Clear profile** removes the line and chart.
+
+Profiles sample Re:Earth/Mapterhorn terrain only on demand, with one sampling job at a time, 129 points, and detail capped at level 14. They add no requests during ordinary navigation or layer transitions. Missing heights remain gaps; partial ascent/descent excludes those gaps. Heights use the WGS84 ellipsoid, not mean sea level. Sample spacing is not source resolution, and narrow features can be missed. This is terrain exploration, not a surveyed cross-section or route-safety assessment.
+
+Cancel, redraw, and the 20-second timeout cancel the profile's own terrain requests.
+A timed-out request cannot block another attempt or replace a newer result. The
+visible globe's terrain requests remain independent.
 
 The trial still uses Re:Earth/Mapterhorn global terrain. USGS relief is a hillshade overlay, not a 3DEP terrain mesh. Imagery and thematic coverage vary by place, and cold layer loads depend on their source services. The Cesium trial supplements the standard viewer; it does not replace its area selection and well workflows. See the [viewer rollout notes](docs/viewer-rollout.md) for sources, performance measurements, and remaining quality gates.
 

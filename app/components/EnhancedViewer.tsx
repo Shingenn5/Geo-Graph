@@ -6,6 +6,9 @@ import { BoundedCache, cachedJson, coordinateQuery } from "../lib/viewer/cache";
 import { recordMetric } from "../lib/viewer/metrics";
 import { SURFACES, SURFACE_DETAILS, TEST_PLACES, type Surface } from "../lib/viewer/sources";
 import type { createScene } from "../lib/viewer/cesium-runtime";
+import type { ProfileState } from "../lib/viewer/terrain-profile";
+import TerrainProfilePanel from "./TerrainProfilePanel";
+import { readViewerSession, saveViewerSession } from "../lib/viewer/session";
 
 type Geology = { units: { name?:string; strat_name?:string; lith?:string; best_int_name?:string; descrip?:string }[]; refs:Record<string,string> };
 type Soil = { soil:null|{mapUnitName:string;componentName:string|null;componentPercent:number|null;texture:string|null;drainageClass:string|null;ph:number|null;slopePercent:number|null;horizons:{name:string|null;topCm:number|null;bottomCm:number|null;texture:string|null}[]} };
@@ -21,12 +24,14 @@ export default function EnhancedViewer() {
   const [ready,setReady]=useState(false),[error,setError]=useState("");
   const [status,setStatus]=useState("Loading 3D viewer…"),[terrain,setTerrain]=useState("Loading global elevation…");
   const [surface,setSurface]=useState<Surface>("Natural"),[labels,setLabels]=useState(true);
-  const [point,setPoint]=useState<{longitude:number;latitude:number;elevation:number}|null>(null);
+  const [point,setPoint]=useState<{longitude:number;latitude:number;elevation:number|null}|null>(null);
   const [center,setCenter]=useState([-112.112,36.106]);
   const [geology,setGeology]=useState<Evidence<Geology>|null>(null),[soil,setSoil]=useState<Evidence<Soil>|null>(null),[provenance,setProvenance]=useState<Evidence<Provenance>|null>(null);
   const [query,setQuery]=useState(""),[searching,setSearching]=useState(false),[searchError,setSearchError]=useState("");
   const [places,setPlaces]=useState<{name:string;point:[number,number]}[]>([]);
-  const inspect=useCallback((longitude:number,latitude:number,elevation:number)=>{
+  const [profile,setProfile]=useState<ProfileState>({status:"idle"});
+  const inspect=useCallback((longitude:number,latitude:number,elevation:number|null)=>{
+    saveViewerSession({point:[longitude,latitude]});
     request.current?.abort();const controller=new AbortController();request.current=controller;
     const started=performance.now();setPoint({longitude,latitude,elevation});
     setGeology({status:"loading"});setSoil({status:"loading"});setProvenance({status:"loading"});
@@ -42,13 +47,17 @@ export default function EnhancedViewer() {
     const css=document.createElement("link");css.rel="stylesheet";css.href="/cesium/Widgets/widgets.css";document.head.appendChild(css);
     import("../lib/viewer/cesium-runtime").then(({createScene})=>{
       if(disposed||!container.current)return;
-      scene.current=createScene(container.current,{status:setStatus,active:setSurface,terrain:setTerrain,pick:inspect,center:(lng,lat)=>setCenter([lng,lat])});setReady(true);
+      const saved=readViewerSession();
+      scene.current=createScene(container.current,{status:setStatus,active:setSurface,terrain:setTerrain,pick:inspect,center:(lng,lat)=>setCenter([lng,lat]),profile:setProfile});
+      setLabels(saved?.labels??true);
+      if(saved?.point)inspect(...saved.point,null);
+      setReady(true);
     }).catch(()=>{if(!disposed)setError("Enhanced 3D could not start on this device. The standard viewer is still available.");});
     return()=>{disposed=true;request.current?.abort();searchRequest.current?.abort();scene.current?.destroy();scene.current=null;css.remove();};
   },[inspect]);
   async function search(){
     searchRequest.current?.abort();const controller=new AbortController();searchRequest.current=controller;
-    setSearchError("");setPlaces([]);
+    setSearching(false);setSearchError("");setPlaces([]);
     const coordinates=query.trim().match(/^(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)$/);
     if(coordinates){const latitude=Number(coordinates[1]),longitude=Number(coordinates[2]);if(Math.abs(latitude)>90||Math.abs(longitude)>180){setSearchError("Use latitude −90 to 90 and longitude −180 to 180.");return;}scene.current?.fly(longitude,latitude,14000);return;}
     if(query.trim().length<2)return;
@@ -59,7 +68,7 @@ export default function EnhancedViewer() {
   }
   const soilData=soil?.data?.soil;
   const firstRock=geology?.data?.units?.[0];
-  return <main className="enhanced-viewer">
+  return <main className={`enhanced-viewer${profile.status!=="idle"?" has-profile":""}`}>
     <header><a className="brand" href="/">◈ GEO GRAPH<small>Terrain intelligence</small></a><span className="header-note">Enhanced 3D · trial</span><a className="viewer-trial-link" href="/">Standard viewer</a></header>
     <div className="workspace"><aside>
       <section className="intro"><p className="eyebrow">EXPLORE THE SURFACE</p><h1>See the landscape.<br/>Understand the ground.</h1><p>Progressive terrain detail. Click the ground for mapped evidence. Existing survey and area tools remain in the standard viewer.</p></section>
@@ -67,7 +76,7 @@ export default function EnhancedViewer() {
       <section><p className="eyebrow">SURFACE LAYERS</p><div className="trial-surfaces">{SURFACES.map(name=><button key={name} disabled={!ready} aria-pressed={surface===name} onClick={()=>{void scene.current?.surface(name);}}>{name}</button>)}</div><p className="display-note">{SURFACE_DETAILS[surface]}</p><label className="trial-checkbox"><input type="checkbox" checked={labels} onChange={event=>{setLabels(event.target.checked);scene.current?.labels(event.target.checked);}}/> Place names and boundaries</label></section>
       <section><p className="eyebrow">CITY & REMOTE COMPARISONS</p><div className="trial-surfaces">{TEST_PLACES.map(place=><button key={place.name} disabled={!ready} onClick={()=>scene.current?.fly(place.longitude,place.latitude,place.height)}>{place.name}</button>)}</div></section>
       <section className="inspector"><p className="eyebrow">SELECTED GROUND</p>{!point?<p>Click terrain to inspect elevation, mapped rocks, and soil. Each source loads independently.</p>:<>
-        <h2>{point.latitude.toFixed(5)}, {point.longitude.toFixed(5)}</h2><p>Rendered terrain height: {Math.round(point.elevation).toLocaleString()} m · ellipsoidal reference. Not a survey measurement.</p>
+        <h2>{point.latitude.toFixed(5)}, {point.longitude.toFixed(5)}</h2><p>Rendered terrain height: {(point.elevation===null?"not sampled — click terrain":`${Math.round(point.elevation).toLocaleString()} m`)} · ellipsoidal reference. Not a survey measurement.</p>
         <h3>Surface geology</h3>{geology?.status==="loading"?<p>Reading geological map…</p>:geology?.status==="error"?<p>Geology service unavailable.</p>:firstRock?<><strong>{firstRock.name||firstRock.strat_name||"Mapped unit"}</strong><p>{firstRock.lith} · {firstRock.best_int_name}</p><p>{firstRock.descrip}</p><small>{geology?.data?.units.length} overlapping map unit(s). Surface mapping does not establish underground layers.</small></>:<p>No geological record returned here.</p>}
         <p><a href="https://macrostrat.org/" target="_blank" rel="noreferrer">Macrostrat and original survey authors ↗</a></p>
         <h3>Soil survey</h3>{soil?.status==="loading"?<p>Reading USDA survey…</p>:soil?.status==="error"?<p>Soil service unavailable.</p>:soilData?<><strong>{soilData.mapUnitName}</strong><p>{soilData.componentName} · {soilData.componentPercent??"Unknown"}% of map unit</p><dl className="trial-facts"><dt>Texture</dt><dd>{soilData.texture??"Not recorded"}</dd><dt>Drainage</dt><dd>{soilData.drainageClass??"Not recorded"}</dd><dt>pH</dt><dd>{soilData.ph??"Not recorded"}</dd><dt>Mapped slope</dt><dd>{soilData.slopePercent==null?"Not recorded":`${soilData.slopePercent}%`}</dd></dl>{soilData.horizons?.slice(0,6).map((h,index)=><p key={index}>{h.name??"Horizon"}: {h.topCm??"?"}–{h.bottomCm??"?"} cm · {h.texture??"Texture unavailable"}</p>)}</>:<p>No SSURGO soil record returned. U.S. coverage varies.</p>}
@@ -75,6 +84,6 @@ export default function EnhancedViewer() {
         <h3>Independent elevation reference</h3>{provenance?.status==="loading"?<p>Checking USGS elevation…</p>:provenance?.data?.elevation?.result?<p>USGS: {provenance.data.elevation.result.elevation??"Unknown"} m. Source spacing: {provenance.data.elevation.result.resolution??"Unknown"} {provenance.data.elevation.result.resolutionUnits??""}. Vertical datum: {provenance.data.elevation.result.verticalDatum??"not supplied"}. Do not directly compare heights with different reference datums.</p>:<p>USGS reference unavailable for this point.</p>}
       </>}</section>
       <section className="coverage"><p>{terrain}</p><p>Detail loads for the visible area. Historical imagery and mapped evidence are not live ground measurements.</p></section>
-    </aside><div className="map-shell"><div ref={container} className="map" aria-label="Enhanced 3D terrain viewer"/>{status&&<div className="layer-status" role="status">{status}</div>}{error&&<div className="map-message" role="alert">{error}<a href="/">Open standard viewer</a></div>}<div className="mode-chip"><span>ENHANCED 3D</span><strong>{surface}</strong><small>{center[1].toFixed(3)}, {center[0].toFixed(3)}</small></div><div className="camera-tools"><button disabled={!ready} onClick={()=>scene.current?.scale(15000000)}>World</button><button disabled={!ready} onClick={()=>scene.current?.scale(250000)}>Region</button><button disabled={!ready} onClick={()=>scene.current?.scale(14000)}>Ground</button><button disabled={!ready} aria-label="Zoom in" title="Zoom in" onClick={()=>scene.current?.zoom(0.55)}>+</button><button disabled={!ready} aria-label="Zoom out" title="Zoom out" onClick={()=>scene.current?.zoom(1.8)}>−</button><button disabled={!ready} title="Face north" onClick={()=>scene.current?.north()}>↑ North</button>{point&&<button onClick={()=>scene.current?.fly(point.longitude,point.latitude,6000)}>Selection</button>}</div><div className="map-help">Drag to move · Right-drag to tilt · Wheel to zoom · Click ground to inspect</div></div></div>
+    </aside><div className="map-shell"><div ref={container} className="map" aria-label="Enhanced 3D terrain viewer"/>{status&&<div className="layer-status" role="status">{status}</div>}{error&&<div className="map-message" role="alert">{error}<a href="/">Open standard viewer</a></div>}<div className="mode-chip"><span>ENHANCED 3D</span><strong>{surface}</strong><small>{center[1].toFixed(3)}, {center[0].toFixed(3)}</small></div><div className="camera-tools"><button disabled={!ready} aria-pressed={profile.status!=="idle"} onClick={()=>scene.current?.profile.start()}>Terrain profile</button><button disabled={!ready} onClick={()=>scene.current?.scale(15000000)}>World</button><button disabled={!ready} onClick={()=>scene.current?.scale(250000)}>Region</button><button disabled={!ready} onClick={()=>scene.current?.scale(14000)}>Ground</button><button disabled={!ready} aria-label="Zoom in" title="Zoom in" onClick={()=>scene.current?.zoom(0.55)}>+</button><button disabled={!ready} aria-label="Zoom out" title="Zoom out" onClick={()=>scene.current?.zoom(1.8)}>−</button><button disabled={!ready} title="Face north" onClick={()=>scene.current?.north()}>↑ North</button>{point&&<button onClick={()=>scene.current?.fly(point.longitude,point.latitude,6000)}>Selection</button>}</div><TerrainProfilePanel state={profile} start={()=>scene.current?.profile.start()} clear={()=>scene.current?.profile.clear()} onFocus={index=>scene.current?.profile.focus(index)}/>{profile.status==="idle"&&<div className="map-help">Drag to move · Right-drag to tilt · Wheel to zoom · Click ground to inspect</div>}</div></div>
   </main>;
 }

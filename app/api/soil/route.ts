@@ -1,4 +1,4 @@
-type SoilDataAccessResponse = { Table?: Array<Array<string | null>> };
+import { parseSoilTable } from "../../lib/soil/response.ts";
 
 function numberOrNull(value: string | null | undefined) {
   if (value == null || value === "") return null;
@@ -18,13 +18,13 @@ export async function GET(request: Request) {
   const query = `
 SELECT
   mu.mukey, mu.musym, mu.muname, lg.areasymbol, lg.areaname,
-  (SELECT COUNT(*) FROM SDA_Get_Mukey_from_intersection_with_WktWgs84('${point}')) AS surveymatchcount,
+  matches.surveymatchcount,
   c.cokey, c.compname, c.compkind, c.majcompflag, c.comppct_r,
   c.taxorder, c.taxsubgrp, c.taxclname, c.drainagecl, c.hydgrp,
   c.slope_l, c.slope_r, c.slope_h, c.runoff, c.hydricrating, c.hydricon,
   c.corcon, c.corsteel, c.frostact, c.nirrcapcl, c.irrcapcl,
-  COALESCE((SELECT TOP 1 cm.flodfreqcl FROM comonth cm WHERE cm.cokey = c.cokey AND cm.flodfreqcl IS NOT NULL AND cm.flodfreqcl <> 'None' ORDER BY cm.monthseq), 'None') AS floodingfrequency,
-  COALESCE((SELECT TOP 1 cm.pondfreqcl FROM comonth cm WHERE cm.cokey = c.cokey AND cm.pondfreqcl IS NOT NULL AND cm.pondfreqcl <> 'None' ORDER BY cm.monthseq), 'None') AS pondingfrequency,
+  (SELECT TOP 1 cm.flodfreqcl FROM comonth cm WHERE cm.cokey = c.cokey AND cm.flodfreqcl IS NOT NULL ORDER BY CASE WHEN cm.flodfreqcl = 'None' THEN 1 ELSE 0 END, cm.monthseq) AS floodingfrequency,
+  (SELECT TOP 1 cm.pondfreqcl FROM comonth cm WHERE cm.cokey = c.cokey AND cm.pondfreqcl IS NOT NULL ORDER BY CASE WHEN cm.pondfreqcl = 'None' THEN 1 ELSE 0 END, cm.monthseq) AS pondingfrequency,
   (SELECT TOP 1 cr.reskind FROM corestrictions cr WHERE cr.cokey = c.cokey ORDER BY cr.resdept_r) AS restrictionkind,
   (SELECT TOP 1 cr.resdept_r FROM corestrictions cr WHERE cr.cokey = c.cokey ORDER BY cr.resdept_r) AS restrictiondepthcm,
   hz.chkey, hz.hzname, hz.hzdept_r, hz.hzdepb_r,
@@ -32,16 +32,17 @@ SELECT
   hz.sandtotal_r, hz.silttotal_r, hz.claytotal_r, hz.fragvoltot_r,
   hz.om_r, hz.ph1to1h2o_r, hz.awc_r, hz.ksat_r, hz.dbthirdbar_r,
   hz.kwfact, hz.ll_r, hz.pi_r, hz.cec7_r, hz.ec_r
-FROM mapunit mu
-JOIN legend lg ON mu.lkey = lg.lkey
+FROM (
+  SELECT MIN(mukey) AS mukey, COUNT(*) AS surveymatchcount
+  FROM SDA_Get_Mukey_from_intersection_with_WktWgs84('${point}')
+) matches
+LEFT JOIN mapunit mu ON mu.mukey = matches.mukey
+LEFT JOIN legend lg ON mu.lkey = lg.lkey
 LEFT JOIN component c ON c.cokey = (
   SELECT TOP 1 c2.cokey FROM component c2
   WHERE c2.mukey = mu.mukey ORDER BY c2.comppct_r DESC, c2.cokey
 )
 LEFT JOIN chorizon hz ON hz.cokey = c.cokey
-WHERE mu.mukey = (
-  SELECT MIN(mukey) FROM SDA_Get_Mukey_from_intersection_with_WktWgs84('${point}')
-)
 ORDER BY hz.hzdept_r, hz.hzdepb_r`;
 
   try {
@@ -52,12 +53,10 @@ ORDER BY hz.hzdept_r, hz.hzdepb_r`;
       signal: AbortSignal.timeout(20000),
     });
     if (!response.ok) throw new Error("Upstream failed");
-    const data = await response.json() as SoilDataAccessResponse;
-    const [headers, ...values] = data.Table ?? [];
-    if (!headers || !values.length) {
+    const rows = parseSoilTable(await response.json());
+    if (!rows.length) {
       return Response.json({ soil: null }, { headers: { "Cache-Control": "public, max-age=86400" } });
     }
-    const rows = values.map(valueRow => Object.fromEntries(headers.map((header, index) => [header, valueRow[index]])));
     const row = rows[0];
     const horizons = rows.filter(item => item.chkey).map(item => ({
       key: item.chkey,
@@ -114,6 +113,6 @@ ORDER BY hz.hzdept_r, hz.hzdepb_r`;
       source: "USDA NRCS Soil Data Access / SSURGO",
     }, { headers: { "Cache-Control": "public, max-age=86400" } });
   } catch {
-    return Response.json({ error: "USDA soil survey service unavailable" }, { status: 502 });
+    return Response.json({ error: "USDA soil survey service unavailable" }, { status: 502, headers: { "Cache-Control": "no-store" } });
   }
 }

@@ -3,6 +3,9 @@ import { trackImagery } from "./imagery-progress";
 import { TransitionGate } from "./transition";
 import { recordMetric } from "./metrics";
 import { CLEAR_IMAGERY_URL, WORLDCOVER_LAYER, type Surface } from "./sources";
+import { createProfileController } from "./profile-controller";
+import type { ProfileState } from "./terrain-profile";
+import { DEFAULT_VIEW, SHARED_SURFACES, readViewerSession, saveViewerSession, rangeForZoom, zoomForRange, type SharedSurface } from "./session";
 
 export type SceneCallbacks = {
   status: (message: string) => void;
@@ -10,10 +13,12 @@ export type SceneCallbacks = {
   active: (surface: Surface) => void;
   pick: (longitude: number, latitude: number, elevation: number) => void;
   center: (longitude: number, latitude: number) => void;
+  profile: (state: ProfileState) => void;
 };
 
 /** Only this dynamically imported module loads the Cesium renderer. */
 export function createScene(container: HTMLElement, callbacks: SceneCallbacks) {
+  const saved=readViewerSession()??DEFAULT_VIEW;
   const started = performance.now();
   const viewer = new C.Viewer(container, {
     baseLayer: false, animation: false, timeline: false, geocoder: false,
@@ -34,9 +39,9 @@ export function createScene(container: HTMLElement, callbacks: SceneCallbacks) {
   controls.inertiaSpin=0.65;
   controls.inertiaZoom=0.55;
   controls.maximumTiltAngle=C.Math.toRadians(88);
-  viewer.camera.lookAt(C.Cartesian3.fromDegrees(-112.112,36.106),new C.HeadingPitchRange(0,C.Math.toRadians(-55),16000));
+  viewer.camera.lookAt(C.Cartesian3.fromDegrees(...saved.center),new C.HeadingPitchRange(C.Math.toRadians(saved.bearing),C.Math.toRadians(saved.pitch-90),rangeForZoom(saved.zoom)));
   viewer.camera.lookAtTransform(C.Matrix4.IDENTITY);
-  let lastFocus=C.Cartographic.fromDegrees(-112.112,36.106);
+  let lastFocus=C.Cartographic.fromDegrees(...saved.center);
   let zoomFocus:C.Cartographic|undefined;
   let zoomRange=0;
   function groundCenter(){
@@ -120,6 +125,7 @@ export function createScene(container: HTMLElement, callbacks: SceneCallbacks) {
   }
   function commit(surface: Surface) {
     active=surface;callbacks.active(surface);
+    saveViewerSession({surface:SHARED_SURFACES.includes(surface as SharedSurface)?surface as SharedSurface:"Natural"});
     for(const [name,layer] of cache){layer.show=name===surface||(name==="Natural"&&surface!=="Bare Earth");layer.alpha=1;}
     viewer.scene.globe.material=surface==="Bare Earth"?elevationMaterial:undefined;
     // At most the natural base plus two recently used thematic layers.
@@ -162,6 +168,7 @@ export function createScene(container: HTMLElement, callbacks: SceneCallbacks) {
     viewer.scene.requestRender();
   }
   function setLabels(show: boolean) {
+    saveViewerSession({labels:show});
     const generation=++labelGeneration;
     if(labels){labels.show=show;viewer.scene.requestRender();return;}
     if(!show)return;
@@ -170,28 +177,42 @@ export function createScene(container: HTMLElement, callbacks: SceneCallbacks) {
     labels=layer;viewer.scene.requestRender();
   }
   const handler=new C.ScreenSpaceEventHandler(viewer.scene.canvas);
+  const profile=createProfileController(viewer,callbacks.profile);
   handler.setInputAction((event:{position:C.Cartesian2})=>{
     const ray=viewer.camera.getPickRay(event.position);if(!ray)return;
     const hit=viewer.scene.globe.pick(ray,viewer.scene);if(!hit)return;
     const point=C.Cartographic.fromCartesian(hit);
+    if(profile.pick(point))return;
     if(selected)viewer.entities.remove(selected);
     selected=viewer.entities.add({position:hit,point:{pixelSize:12,color:C.Color.fromCssColorString("#ffbd4a"),outlineColor:C.Color.WHITE,outlineWidth:2,disableDepthTestDistance:Number.POSITIVE_INFINITY}});
     callbacks.pick(C.Math.toDegrees(point.longitude),C.Math.toDegrees(point.latitude),point.height);viewer.scene.requestRender();
   },C.ScreenSpaceEventType.LEFT_CLICK);
   viewer.camera.moveStart.addEventListener(()=>{moving=true;viewer.scene.globe.maximumScreenSpaceError=8;});
-  function finishNavigation(){moving=false;zoomFocus=undefined;viewer.scene.globe.maximumScreenSpaceError=4;const p=groundCenter();callbacks.center(C.Math.toDegrees(p.longitude),C.Math.toDegrees(p.latitude));viewer.scene.requestRender();}
+  function finishNavigation(){
+    moving=false;zoomFocus=undefined;viewer.scene.globe.maximumScreenSpaceError=4;
+    const p=groundCenter();
+    const center:[number,number]=[C.Math.toDegrees(p.longitude),C.Math.toDegrees(p.latitude)];
+    callbacks.center(...center);
+    saveViewerSession({center,zoom:zoomForRange(currentRange()),bearing:C.Math.toDegrees(viewer.camera.heading),pitch:Math.max(0,Math.min(75,90+C.Math.toDegrees(viewer.camera.pitch)))});
+    viewer.scene.requestRender();
+  }
   viewer.camera.moveEnd.addEventListener(finishNavigation);
   // Only sample frame timing while moving; idle mode does not run a permanent frame loop.
   let lastFrame=0;let slowFrames=0;let frameCount=0;
   viewer.scene.postRender.addEventListener(()=>{const now=performance.now();if(moving&&lastFrame){frameCount++;if(now-lastFrame>33.4)slowFrames++;}lastFrame=now;});
   viewer.camera.moveEnd.addEventListener(()=>{if(frameCount){recordMetric(`cesium-motion-slow-frames-${slowFrames}-of-${frameCount}`,performance.now());frameCount=0;slowFrames=0;lastFrame=0;}});
   const removeInitial=viewer.scene.postRender.addEventListener(()=>{if(!viewer.scene.globe.tilesLoaded)return;recordMetric("cesium-initial-ready",started);removeInitial();});
-  void surface("Natural");setLabels(true);void terrainReady;
+  // Always create the natural underlay, including when restoring a thematic layer.
+  void surface("Natural");
+  if(saved.surface!=="Natural")void surface(saved.surface);
+  setLabels(saved.labels);void terrainReady;
+  callbacks.center(...saved.center);
   return {
     surface, labels:setLabels, fly,
+    profile,
     scale(range:number){zoomFocus=undefined;moveTo(groundCenter(),range);},
     zoom,
     north(){moveTo(groundCenter(),currentRange(),0);},
-    destroy(){disposed=true;viewer.canvas.removeEventListener("wheel",onWheel);gate.cancel();cancelWait?.();cancelAnimationFrame(fadeFrame);handler.destroy();viewer.destroy();},
+    destroy(){disposed=true;profile.destroy();viewer.canvas.removeEventListener("wheel",onWheel);gate.cancel();cancelWait?.();cancelAnimationFrame(fadeFrame);handler.destroy();viewer.destroy();},
   };
 }

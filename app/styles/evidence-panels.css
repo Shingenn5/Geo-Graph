@@ -366,3 +366,16 @@
 .source-links a {
   color: #087184;
 }
+.download-ready {
+  padding: 10px 16px;
+  margin: 0;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+  color: #226b59;
+  background: #e8f5f2;
+}
+
+.download-ready a {
+  color: #127486;
+  font-weight: 600;
+}
