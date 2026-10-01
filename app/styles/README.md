@@ -5,8 +5,8 @@
 | File | Owns |
 | --- | --- |
 | `workspace.css` | Shared foundation, header, sidebar, inspector, and workspace layout |
-| `dashboard.css` | Report actions, dashboard cards, use cases, and soil horizons |
-| `map-controls.css` | Camera controls, map context, and surface selectors |
+| `dashboard.css` | Dashboard navigation and panels, report actions, cards, use cases, and soil horizons |
+| `map-controls.css` | Camera controls, map feedback, map context, and surface selectors |
 | `evidence-panels.css` | Wells, area evidence, core context, LAS preview, and source panels |
 | `enhanced-viewer.css` | Viewer switch, layer status, and Cesium-specific presentation |
 | `terrain-profile.css` | Terrain profile dock, chart, controls, and mobile layout |

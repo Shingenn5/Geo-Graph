@@ -1,11 +1,16 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 export function useDownload() {
   const [file, setFile] = useState<{url:string;name:string}|null>(null);
   const current = useRef<string|null>(null);
   useEffect(() => () => { if (current.current) URL.revokeObjectURL(current.current); }, []);
+  const clear = useCallback(() => {
+    if (current.current) URL.revokeObjectURL(current.current);
+    current.current = null;
+    setFile(null);
+  }, []);
   function download(body:string, mime:string, name:string) {
     if (current.current) URL.revokeObjectURL(current.current);
     const url = URL.createObjectURL(new Blob([body], {type:`${mime};charset=utf-8`}));
@@ -16,7 +21,7 @@ export function useDownload() {
     link.href = url; link.download = name;
     document.body.appendChild(link); link.click(); link.remove();
   }
-  return {file,download};
+  return {file,download,clear};
 }
 
 export default function DownloadLink({file}:{file:{url:string;name:string}|null}) {

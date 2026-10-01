@@ -1,5 +1,91 @@
 /* Camera controls, map context, and surface selectors. */
 
+.survey-dashboard .map-shell {
+  isolation: isolate;
+}
+
+.survey-dashboard .camera-tools {
+  top: 104px;
+  bottom: auto;
+  left: 20px;
+  right: 64px;
+  max-width: none;
+  justify-content: flex-start;
+}
+
+.survey-dashboard .camera-tools button {
+  min-height: 36px;
+  font-size: 12px;
+}
+
+.survey-dashboard .map-message {
+  top: 160px;
+}
+
+.survey-dashboard .map-feedback {
+  position: absolute;
+  left: 20px;
+  right: 20px;
+  bottom: 100px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  z-index: 4;
+  pointer-events: none;
+}
+
+.survey-dashboard .map-feedback > * {
+  position: static;
+  max-width: 100%;
+  margin: 0;
+}
+
+.survey-dashboard .map-feedback .selection-summary {
+  pointer-events: auto;
+}
+
+.survey-dashboard .layer-status {
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+@media (max-width:760px) {
+  .survey-dashboard .camera-tools {
+    top: 104px;
+    left: 12px;
+    right: 55px;
+    gap: 6px;
+  }
+
+  .survey-dashboard .camera-tools button {
+    min-height: 36px;
+    padding: 8px;
+    font-size: 11px;
+  }
+
+  .survey-dashboard .mode-chip {
+    top: 12px;
+    left: 12px;
+    max-width: calc(100% - 76px);
+  }
+
+  .survey-dashboard .map {
+    scroll-margin-top: 170px;
+  }
+
+  .survey-dashboard .map-help {
+    bottom: 30px;
+    font-size: 11px;
+  }
+
+  .survey-dashboard .map-feedback {
+    left: 12px;
+    right: 12px;
+    bottom: 82px;
+  }
+}
+
 .camera-tools {
   max-width: 520px;
   justify-content: flex-end;

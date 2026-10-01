@@ -189,13 +189,13 @@ Use the [five-minute interview guide](docs/interview-demo.md) and [dated validat
 1. Launch the application and wait for the map controls to become enabled.
 2. Choose **Explore Uinta Basin public-data pilot →** in the sidebar.
 3. Wait for the map to move near Roosevelt, Utah. The shortcut selects **Wellsite** and queries soil, geology, public wells, and source-quality metadata.
-4. Scroll to **Selected location**. Read **Soil survey** and **Surface geology**; expand **Additional survey fields** and **Survey source**.
+4. **Results** opens automatically. Read **Soil survey** and **Surface geology**; expand **Additional survey fields** and **Survey source**.
 5. In **Nearby wells**, choose a record to inspect its published surface location. This selects a new point and refreshes the evidence.
 6. Read **What supports this view?** for imagery catalog context and the independent USGS elevation check.
-7. Find **Take this survey with you.**, choose **Printable survey** or **JSON**, and save the file.
+7. Use the export buttons at the top of **Results**. Choose **Printable survey** or **JSON**, and save the file.
 8. Choose **Try enhanced 3D**, select **Grand Canyon**, and draw a terrain profile using the steps below.
 
-On smaller displays, scroll to reach the sidebar and map tools. The map's selected-point summary includes **View details ↓** to move to the corresponding sidebar section.
+Search and the **Explore / Layers / Results** navigation stay within reach as you scroll. On smaller displays, the map sits between navigation and panel content; choosing a panel moves to its content. A selected point or area has a **View results →** shortcut on the map.
 
 ## Navigate the map
 
@@ -229,9 +229,17 @@ Choose **Go**, then click ground to inspect it. Moving the camera does not itsel
 
 The standard workspace opens at `/` and contains the full point/area survey, well-record, report, and LAS workflows.
 
+Use the three dashboard panels:
+
+- **Explore:** open the Uinta pilot, choose a focus, or start a point/area selection.
+- **Layers:** choose the surface, imagery, overlays, and optional building sources.
+- **Results:** read selected evidence, compare nearby wells, inspect soil horizons, and export the survey. Point and completed area selections open this panel automatically.
+
+Search remains available above all three panels. Switching panels preserves the map, selected evidence, layer settings, and any imported LAS log. Changing or clearing the survey selection removes the previous export's Save link; save the file before selecting another location. Navigate the panel tabs with the left/right arrow keys; **Home** and **End** select the first and last tabs.
+
 ### Choose a workspace
 
-Workspaces adjust visible fields, layers, and camera pitch for preliminary exploration:
+In **Explore**, choose a focus under **What are you exploring?**. These workspaces adjust visible fields, layers, and camera pitch for preliminary exploration:
 
 | Workspace | Starting display and focus |
 | --- | --- |
@@ -265,6 +273,8 @@ Area is calculated on the WGS84 ellipsoid between latitude/longitude bounds, not
 
 ### Change layers
 
+Open **Layers** to access these controls. Your selected point or area remains available in **Results**.
+
 | Control | Display |
 | --- | --- |
 | Natural | Esri imagery over Mapterhorn terrain. |
@@ -291,7 +301,7 @@ In **Wellsite**, selecting ground queries public Utah oil and gas surface locati
 
 To inspect your own log:
 
-1. Open **Wellsite** and find **Inspect a depth curve**.
+1. Choose **Wellsite** in Explore, open **Results**, and expand **Local LAS log · import a depth curve**.
 2. Choose **Choose LAS file** and select a plain-text `.las` file.
 3. Select a **Curve** to view it against source-reported depth. Read duplicate/direction-changing depth notices.
 4. Choose **Clear local log** when finished.

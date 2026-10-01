@@ -23,8 +23,8 @@ data services require internet access; this is not an offline tile package.
 1. **Standard viewer:** choose **Explore Uinta Basin public-data pilot**. Explain
    the terrain, mapped soil, surface geology, and public well records. Distinguish
    these published interpretations from an on-site measurement.
-2. **Evidence:** show the soil horizons and source-quality panel. Export a
-   **Printable survey** or **JSON** to demonstrate that source limits travel with
+2. **Results:** opens automatically after selection. Show the soil horizons and source-quality panel. Export a
+   **Printable survey** or **JSON** using the buttons at the top to demonstrate that source limits travel with
    the result.
 3. **Area:** choose **Select area** and click two nearby corners. Show the area
    calculation and five point samples. Explain that these probes do not establish

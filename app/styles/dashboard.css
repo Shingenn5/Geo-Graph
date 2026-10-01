@@ -1,5 +1,301 @@
 /* Report actions, dashboard cards, use cases, and soil horizons. */
 
+/* Standard survey dashboard: navigation stays visible while evidence scrolls. */
+.survey-dashboard .workspace {
+  grid-template-columns: 390px minmax(0,1fr);
+}
+
+.survey-dashboard aside {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.dashboard-toolbar {
+  flex: 0 0 auto;
+  background: #fff;
+  border-bottom: 1px solid #d9e3e5;
+  box-shadow: 0 3px 12px #153e4808;
+  z-index: 3;
+}
+
+.survey-dashboard .location-panel {
+  padding: 18px 20px 12px;
+  border-bottom: 0;
+}
+
+.survey-dashboard .search-row input {
+  min-width: 0;
+  font-size: 14px;
+}
+
+.survey-dashboard .search-row button {
+  min-width: 48px;
+  min-height: 42px;
+}
+
+.survey-dashboard .search-hint {
+  margin: 7px 0 0;
+  font-size: 11px;
+  line-height: 1.4;
+  color: #59717a;
+}
+
+.survey-dashboard .places {
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.dashboard-navigation {
+  display: grid;
+  grid-template-columns: repeat(3,minmax(0,1fr));
+  gap: 4px;
+  padding: 0 12px 10px;
+}
+
+.dashboard-navigation button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 44px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: #526e77;
+  background: #f2f6f6;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.dashboard-navigation button:hover {
+  background: #e6eff0;
+}
+
+.dashboard-navigation button[aria-selected=true] {
+  background: #127486;
+  color: #fff;
+}
+
+.results-count {
+  min-width: 20px;
+  padding: 2px 5px;
+  border-radius: 99px;
+  background: #ffffff35;
+  font-size: 11px;
+}
+
+.sidebar-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-gutter: stable;
+}
+
+.survey-dashboard [role=tabpanel] {
+  scroll-margin-top: 170px;
+}
+
+.survey-dashboard section {
+  padding: 20px;
+}
+
+.survey-dashboard .dashboard-intro h1 {
+  font-size: 26px;
+  line-height: 1.2;
+}
+
+.survey-dashboard section p {
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.survey-dashboard .dashboard-guide h2 {
+  font-size: 17px;
+}
+
+.survey-dashboard .section-heading {
+  align-items: flex-start;
+}
+
+.survey-dashboard .selection-count {
+  flex-shrink: 0;
+}
+
+.survey-dashboard .use-case-tab-row {
+  display: grid;
+  grid-template-columns: repeat(2,minmax(0,1fr));
+  gap: 7px;
+  margin-top: 12px;
+}
+
+.survey-dashboard .use-case-tab-row button {
+  min-height: 40px;
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+.survey-dashboard .use-case-summary p {
+  font-size: 12px;
+}
+
+.survey-dashboard .workspace-tools {
+  flex-wrap: wrap;
+}
+
+.survey-dashboard .workspace-tools button,
+.survey-dashboard .mini-export,
+.survey-dashboard .survey-export-actions button {
+  min-height: 36px;
+  font-size: 12px;
+}
+
+.survey-dashboard .results-overview {
+  background: #edf5f4;
+}
+
+.survey-dashboard .results-location {
+  font-variant-numeric: tabular-nums;
+  color: #47646d;
+}
+
+.survey-dashboard .results-overview .survey-export-actions {
+  grid-template-columns: repeat(3,minmax(0,1fr));
+  margin-top: 16px;
+}
+
+.survey-dashboard .results-overview .survey-export-actions button {
+  color: #275961;
+  background: #fff;
+  border: 1px solid #c2d7d8;
+}
+
+.survey-dashboard .results-overview .survey-export-actions .export-button {
+  grid-column: 1/-1;
+  background: #127486;
+  border-color: #127486;
+  color: #fff;
+}
+
+.survey-dashboard .export-progress {
+  color: #536c75;
+  font-size: 12px;
+}
+
+.survey-dashboard .interpretation-note {
+  font-size: 11px !important;
+}
+
+.survey-dashboard .fact-grid dd,
+.survey-dashboard .use-case-facts dd {
+  font-size: 13px;
+}
+
+.survey-dashboard .terrain-status small,
+.survey-dashboard .layer-grid small,
+.survey-dashboard .surface-legend span {
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.survey-dashboard .layer-grid button,
+.survey-dashboard .surface-grid button,
+.survey-dashboard .base-switch button {
+  min-height: 42px;
+}
+
+.evidence-disclosure {
+  border-bottom: 1px solid #d9e3e5;
+}
+
+.evidence-disclosure > summary {
+  padding: 18px 20px;
+  cursor: pointer;
+  color: #30555e;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.evidence-disclosure > summary:hover {
+  background: #eaf3f3;
+}
+
+.survey-dashboard .horizon-list strong,
+.survey-dashboard .horizon-list span,
+.survey-dashboard .horizon-list dd {
+  font-size: 12px;
+}
+
+.survey-dashboard .horizon-list dt {
+  font-size: 10px;
+}
+
+@media (min-width:761px) and (max-width:1000px) {
+  .survey-dashboard .workspace {
+    grid-template-columns: 350px minmax(0,1fr);
+  }
+}
+
+@media (max-width:760px) {
+  .survey-dashboard .workspace {
+    display: grid;
+    grid-template-columns: minmax(0,1fr);
+    height: auto;
+  }
+
+  .survey-dashboard aside {
+    display: contents;
+  }
+
+  .dashboard-toolbar {
+    grid-row: 1;
+    position: sticky;
+    top: 0;
+  }
+
+  .survey-dashboard .location-panel {
+    padding: 12px 14px 8px;
+  }
+
+  .survey-dashboard .search-row input {
+    font-size: 16px;
+  }
+
+  .survey-dashboard .search-hint {
+    font-size: 10px;
+  }
+
+  .survey-dashboard .map-shell {
+    grid-row: 2;
+    height: 55dvh;
+    min-height: 380px;
+  }
+
+  .sidebar-scroll {
+    grid-row: 3;
+    overflow: visible;
+    min-width: 0;
+  }
+
+  .survey-dashboard .dashboard-intro {
+    display: block;
+  }
+
+  .survey-dashboard .workspace-tools button,
+  .survey-dashboard .mini-export,
+  .survey-dashboard .survey-export-actions button,
+  .survey-dashboard .use-case-tab-row button {
+    min-height: 44px;
+  }
+}
+
+@media (max-width:420px) {
+  .survey-dashboard header .view-readout b {
+    display: none;
+  }
+}
+
 .report-export {
   background: linear-gradient(145deg,#0b3f4b,#0a5660);
   color: #fff;
