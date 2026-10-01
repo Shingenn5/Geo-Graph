@@ -244,6 +244,12 @@ New sessions start in the Uinta Basin near Roosevelt, Utah, with a point selecte
 
 Choose **Select ground**, then click a location. At broad zoom, the click also moves closer; inspect again once the ground is visible at a useful scale. At close zoom, **Inspect map center** offers another selection method. **Selection** returns the camera to your point; **Clear** removes the active survey selection.
 
+Wheel and pinch zoom stay centered on the view. World-scale navigation keeps the
+globe face-on; tilt becomes available gradually as you zoom toward terrain. Zooming
+does not automatically turn the camera. **World** frames the globe for the map's
+available space; **Reset view** centers the camera and faces north. The immersive
+viewer also stops rotation when a drag ends and limits near-horizon tilt.
+
 Soil and geology load independently. Soil evidence can include map unit, dominant component and percentage, drainage, hydrologic group, representative slope, texture, pH, organic matter, and horizon depths. Expand **Additional survey fields** for further values. Unpublished values stay unavailable instead of being filled with assumed zeros or absence.
 
 Where geological maps overlap, use **Survey interpretation** to examine the returned units and **Survey source** for original references. These are overlapping/alternative map interpretations, not an ordered underground column.

@@ -5,6 +5,7 @@ import { recordMetric } from "./metrics";
 import { CLEAR_IMAGERY_URL, WORLDCOVER_LAYER, type Surface } from "./sources";
 import { createProfileController } from "./profile-controller";
 import type { ProfileState } from "./terrain-profile";
+import { maxPitchForZoom } from "./navigation";
 import { DEFAULT_VIEW, SHARED_SURFACES, readViewerSession, saveViewerSession, rangeForZoom, zoomForRange, type SharedSurface } from "./session";
 
 export type SceneCallbacks = {
@@ -34,12 +35,16 @@ export function createScene(container: HTMLElement, callbacks: SceneCallbacks) {
   viewer.scene.globe.baseColor = C.Color.fromCssColorString("#677d70");
   const controls=viewer.scene.screenSpaceCameraController;
   controls.minimumZoomDistance = 100;
+  controls.maximumZoomDistance = 25_000_000;
+  controls.maximumMovementRatio = 0.1;
+  controls.enableLook = false;
+  controls.inertiaTranslate = 0;
   controls.zoomEventTypes=[C.CameraEventType.PINCH];
   controls.tiltEventTypes=[C.CameraEventType.RIGHT_DRAG,C.CameraEventType.MIDDLE_DRAG,C.CameraEventType.PINCH,{eventType:C.CameraEventType.LEFT_DRAG,modifier:C.KeyboardEventModifier.CTRL}];
-  controls.inertiaSpin=0.65;
-  controls.inertiaZoom=0.55;
-  controls.maximumTiltAngle=C.Math.toRadians(88);
-  viewer.camera.lookAt(C.Cartesian3.fromDegrees(...saved.center),new C.HeadingPitchRange(C.Math.toRadians(saved.bearing),C.Math.toRadians(saved.pitch-90),rangeForZoom(saved.zoom)));
+  controls.inertiaSpin=0;
+  controls.inertiaZoom=0.25;
+  controls.maximumTiltAngle=C.Math.toRadians(65);
+  viewer.camera.lookAt(C.Cartesian3.fromDegrees(...saved.center),new C.HeadingPitchRange(C.Math.toRadians(saved.bearing),C.Math.toRadians(Math.min(saved.pitch,maxPitchForZoom(saved.zoom))-90),rangeForZoom(saved.zoom)));
   viewer.camera.lookAtTransform(C.Matrix4.IDENTITY);
   let lastFocus=C.Cartographic.fromDegrees(...saved.center);
   let zoomFocus:C.Cartographic|undefined;
@@ -62,7 +67,7 @@ export function createScene(container: HTMLElement, callbacks: SceneCallbacks) {
       if(C.Cartesian3.magnitudeSquared(north)<0.001)C.Cartesian3.subtract(C.Cartesian3.UNIT_Y,C.Cartesian3.multiplyByScalar(outward,C.Cartesian3.dot(C.Cartesian3.UNIT_Y,outward),new C.Cartesian3()),north);
       viewer.camera.flyTo({destination,orientation:{direction,up:C.Cartesian3.normalize(north,north)},duration:1.1,complete:finishNavigation});
     }else{
-      const pitch=viewer.camera.pitch<C.Math.toRadians(-80)||viewer.camera.pitch>C.Math.toRadians(-15)?C.Math.toRadians(-55):viewer.camera.pitch;
+      const pitch=viewer.camera.pitch<C.Math.toRadians(-80)||viewer.camera.pitch>C.Math.toRadians(-25)?C.Math.toRadians(-55):viewer.camera.pitch;
       viewer.camera.flyToBoundingSphere(new C.BoundingSphere(ground,0),{offset:new C.HeadingPitchRange(heading,pitch,distance),duration:1.1,complete:finishNavigation});
     }
     viewer.scene.requestRender();
@@ -190,6 +195,7 @@ export function createScene(container: HTMLElement, callbacks: SceneCallbacks) {
   viewer.camera.moveStart.addEventListener(()=>{moving=true;viewer.scene.globe.maximumScreenSpaceError=8;});
   function finishNavigation(){
     moving=false;zoomFocus=undefined;viewer.scene.globe.maximumScreenSpaceError=4;
+    controls.enableTilt=currentRange()<=2_000_000;
     const p=groundCenter();
     const center:[number,number]=[C.Math.toDegrees(p.longitude),C.Math.toDegrees(p.latitude)];
     callbacks.center(...center);
@@ -206,6 +212,7 @@ export function createScene(container: HTMLElement, callbacks: SceneCallbacks) {
   void surface("Natural");
   if(saved.surface!=="Natural")void surface(saved.surface);
   setLabels(saved.labels);void terrainReady;
+  controls.enableTilt=rangeForZoom(saved.zoom)<=2_000_000;
   callbacks.center(...saved.center);
   return {
     surface, labels:setLabels, fly,
