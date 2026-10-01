@@ -2,7 +2,7 @@
 
 import { useRef } from "react";
 
-const PANELS = ["explore", "layers", "results"] as const;
+const PANELS = ["explore", "layers", "results", "areas"] as const;
 export type DashboardPanel = typeof PANELS[number];
 
 export default function DashboardNavigation({ active, onChange, selection }: {
@@ -36,7 +36,7 @@ export default function DashboardNavigation({ active, onChange, selection }: {
         onChange(PANELS[next]);
         buttons.current[next]?.focus();
       }}
-    >{panel === "explore" ? "Explore" : panel === "layers" ? "Layers" : "Results"}
+    >{panel === "explore" ? "Explore" : panel === "layers" ? "Layers" : panel === "areas" ? "Areas" : "Results"}
       {panel === "results" && <span className="results-count" aria-label={selection}>{selection === "No selection" ? "—" : "1"}</span>}
     </button>)}
   </div>;

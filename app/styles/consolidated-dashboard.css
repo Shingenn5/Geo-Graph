@@ -1,0 +1,219 @@
+/* The standard survey workspace: one persistent menu, focused evidence views. */
+.consolidated-dashboard .workspace {
+  height: 100dvh;
+}
+.consolidated-dashboard .sidebar-scroll {
+  background: #fbfcfc;
+}
+.consolidated-dashboard .workspace-brand {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px 0;
+}
+.consolidated-dashboard .brand {
+  font-size: 15px;
+  letter-spacing: .08em;
+}
+.consolidated-dashboard .brand small {
+  font-size: 11px;
+}
+.workspace-viewer {
+  font-size: 12px;
+  color: #127486;
+  text-decoration: none;
+}
+.workspace-viewer:hover {
+  text-decoration: underline;
+}
+.consolidated-dashboard .location-panel {
+  padding: 12px 16px;
+}
+.consolidated-dashboard .location-panel .sr-only,
+.consolidated-dashboard .search-hint {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+.consolidated-dashboard .search-hint {
+  font-size: 10px;
+}
+.consolidated-dashboard .dashboard-navigation {
+  grid-template-columns: repeat(4,minmax(0,1fr));
+  padding: 0 12px 8px;
+}
+.consolidated-dashboard .dashboard-navigation button {
+  min-height: 38px;
+  font-size: 12px;
+  gap: 4px;
+}
+.workspace-selection-tools {
+  display: grid;
+  grid-template-columns: repeat(3,minmax(0,1fr));
+  gap: 6px;
+  padding: 0 12px;
+}
+.workspace-selection-tools button {
+  min-height: 38px;
+  padding: 6px;
+  border: 1px solid #bed4d7;
+  border-radius: 7px;
+  background: #fff;
+  color: #235a65;
+  font-size: 12px;
+  font-weight: 700;
+}
+.workspace-selection-tools button[aria-pressed=true] {
+  background: #fff4da;
+  border-color: #dca443;
+  color: #755114;
+}
+.workspace-scale-tools {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 8px 12px;
+}
+.workspace-scale-tools button {
+  border: 0;
+  border-radius: 5px;
+  background: #eef4f4;
+  color: #47646d;
+  padding: 6px 8px;
+  font-size: 11px;
+  min-height: 30px;
+}
+.workspace-scale-tools button[aria-pressed=true] {
+  color: #fff;
+  background: #127486;
+}
+.workspace-scale-tools span {
+  font-size: 10px;
+  color: #59717a;
+  margin-left: auto;
+}
+.result-navigation {
+  display: grid;
+  grid-template-columns: repeat(5,minmax(0,1fr));
+  gap: 3px;
+  padding: 8px 10px;
+  border-top: 1px solid #d9e3e5;
+  background: #edf5f4;
+}
+.result-navigation button {
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: #48656c;
+  padding: 6px 3px;
+  min-height: 36px;
+  font-size: 11px;
+}
+.result-navigation button[aria-pressed=true] {
+  background: #fff;
+  color: #0c6576;
+  box-shadow: 0 1px 5px #153e4814;
+  font-weight: 700;
+}
+.consolidated-dashboard section {
+  padding: 16px;
+}
+.consolidated-dashboard .use-case-panel h1 {
+  font-size: 24px;
+  margin: 0 0 8px;
+}
+.consolidated-dashboard .use-case-panel > label {
+  margin-top: 16px;
+}
+.workspace-help {
+  margin-top: 16px;
+  font-size: 12px;
+  color: #47646d;
+}
+.workspace-help summary {
+  cursor: pointer;
+  padding: 8px 0;
+}
+.consolidated-dashboard .pilot-link {
+  margin-top: 12px;
+}
+.consolidated-dashboard .map-message {
+  top: 104px;
+}
+.consolidated-dashboard .map-shell .map-help {
+  bottom: 36px;
+}
+.consolidated-dashboard .map-shell .selection-summary {
+  bottom: 88px;
+}
+.consolidated-dashboard .map-shell .scene-loading {
+  bottom: 144px;
+}
+.ground-navigation {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.ground-navigation button {
+  flex: 1;
+  border: 1px solid #c2d7d8;
+  background: #fff;
+  color: #275961;
+  border-radius: 6px;
+  min-height: 38px;
+  font-size: 13px;
+}
+.ground-navigation button[aria-pressed=true] {
+  background: #127486;
+  color: #fff;
+  border-color: #127486;
+}
+.consolidated-dashboard .inspector .selection-heading {
+  margin-bottom: 8px;
+}
+@media (max-width:760px) {
+  .consolidated-dashboard .workspace {
+    height: auto;
+  }
+  .consolidated-dashboard .sidebar-scroll {
+    min-height: calc(100dvh - 240px);
+  }
+  .consolidated-dashboard .workspace-brand {
+    padding-top: 10px;
+  }
+  .consolidated-dashboard .map-shell {
+    height: 48dvh;
+    min-height: 300px;
+  }
+  .consolidated-dashboard .map-shell .mode-chip {
+    top: 12px;
+    left: 12px;
+  }
+  .consolidated-dashboard .map-message {
+    top: 104px;
+  }
+  .consolidated-dashboard .dashboard-toolbar {
+    max-height: 60dvh;
+    overflow-y: auto;
+  }
+  .workspace-selection-tools button, .result-navigation button {
+    min-height: 40px;
+  }
+  .consolidated-dashboard .map-shell .selection-summary {
+    left: 12px;
+    max-width: calc(100% - 24px);
+    gap: 8px;
+    padding: 10px;
+  }
+  .consolidated-dashboard .map-shell .scene-loading {
+    left: 12px;
+  }
+}

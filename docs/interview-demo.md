@@ -20,16 +20,16 @@ data services require internet access; this is not an offline tile package.
 
 ## Five-minute sequence
 
-1. **Standard viewer:** choose **Explore Uinta Basin public-data pilot**. Explain
+1. **Standard viewer:** choose **Explore Uinta Basin pilot**. Explain
    the terrain, mapped soil, surface geology, and public well records. Distinguish
    these published interpretations from an on-site measurement.
-2. **Results:** opens automatically after selection. Show the soil horizons and source-quality panel. Export a
-   **Printable survey** or **JSON** using the buttons at the top to demonstrate that source limits travel with
+2. **Results:** opens automatically after selection. Open **Ground** for geology/soil, **Wells** for public records, **Logs & depth** for horizons and LAS import, and **Sources** for source quality. Return to **Overview** to export a
+   **Printable survey** or **JSON** using the Overview buttons to demonstrate that source limits travel with
    the result.
-3. **Area:** choose **Select area** and click two nearby corners. Show the area
+3. **Area:** choose **Select area** and click two nearby corners. Open **Results → Ground** to show the area
    calculation and five point samples. Explain that these probes do not establish
    uniform conditions throughout the polygon.
-4. **Enhanced 3D:** choose **Try enhanced 3D**, then **Grand Canyon**. Demonstrate
+4. **Enhanced 3D:** choose **Enhanced 3D ↗**, then **Grand Canyon**. Demonstrate
    World/Region/Ground navigation and **Bare Earth**, then return to **Natural**.
 5. **Terrain profile:** select two nearby ground points, show the elevation chart,
    move its position slider, and export CSV. Heights use an ellipsoidal reference;

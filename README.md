@@ -187,15 +187,15 @@ Use the [five-minute interview guide](docs/interview-demo.md) and [dated validat
 ## Your first survey
 
 1. Launch the application and wait for the map controls to become enabled.
-2. Choose **Explore Uinta Basin public-data pilot →** in the sidebar.
+2. Choose **Explore Uinta Basin pilot →** in the sidebar.
 3. Wait for the map to move near Roosevelt, Utah. The shortcut selects **Wellsite** and queries soil, geology, public wells, and source-quality metadata.
-4. **Results** opens automatically. Read **Soil survey** and **Surface geology**; expand **Additional survey fields** and **Survey source**.
-5. In **Nearby wells**, choose a record to inspect its published surface location. This selects a new point and refreshes the evidence.
-6. Read **What supports this view?** for imagery catalog context and the independent USGS elevation check.
-7. Use the export buttons at the top of **Results**. Choose **Printable survey** or **JSON**, and save the file.
-8. Choose **Try enhanced 3D**, select **Grand Canyon**, and draw a terrain profile using the steps below.
+4. **Results** opens automatically. Open **Ground**, then switch between **Geology** and **Soil**; expand **Additional survey fields** and **Survey source**.
+5. In **Results → Wells**, choose a record to inspect its published surface location. This selects a new point and refreshes the evidence.
+6. Open **Results → Sources** and read **What supports this view?** for imagery catalog context and the independent USGS elevation check.
+7. Use the export buttons in **Results → Overview**. Choose **Printable survey** or **JSON**, and save the file.
+8. Choose **Enhanced 3D ↗**, select **Grand Canyon**, and draw a terrain profile using the steps below.
 
-Search and the **Explore / Layers / Results** navigation stay within reach as you scroll. On smaller displays, the map sits between navigation and panel content; choosing a panel moves to its content. A selected point or area has a **View results →** shortcut on the map.
+Search, point/area selection, map scale, and the **Explore / Layers / Results / Areas** navigation stay within reach as you scroll. Results has direct **Overview**, **Ground**, **Wells**, **Logs & depth**, and **Sources** buttons, so evidence does not stack into one long page. On smaller displays, the map sits between navigation and panel content; choosing a panel moves to its content. A selected point or area has a **View results →** shortcut on the map.
 
 ## Navigate the map
 
@@ -229,17 +229,18 @@ Choose **Go**, then click ground to inspect it. Moving the camera does not itsel
 
 The standard workspace opens at `/` and contains the full point/area survey, well-record, report, and LAS workflows.
 
-Use the three dashboard panels:
+Use the four dashboard panels:
 
 - **Explore:** open the Uinta pilot, choose a focus, or start a point/area selection.
 - **Layers:** choose the surface, imagery, overlays, and optional building sources.
-- **Results:** read selected evidence, compare nearby wells, inspect soil horizons, and export the survey. Point and completed area selections open this panel automatically.
+- **Results:** open **Overview** for key facts and exports, **Ground** for geology/soil or area samples, **Wells** for nearby public records, **Logs & depth** for LAS import, core references, and soil horizons, and **Sources** for point metadata. Point and completed area selections open Overview automatically.
+- **Areas:** save named footprints in multiple countries and reopen them for fresh evidence checks. Your collection stays mounted when you switch tabs.
 
-Search remains available above all three panels. Switching panels preserves the map, selected evidence, layer settings, and any imported LAS log. Changing or clearing the survey selection removes the previous export's Save link; save the file before selecting another location. Navigate the panel tabs with the left/right arrow keys; **Home** and **End** select the first and last tabs.
+Search remains available above all four panels. Switching panels preserves the map, selected evidence, layer settings, and any imported LAS log. Changing or clearing the survey selection removes the previous export's Save link; save the file before selecting another location. Navigate the panel tabs with the left/right arrow keys; **Home** and **End** select the first and last tabs.
 
 ### Choose a workspace
 
-In **Explore**, choose a focus under **What are you exploring?**. These workspaces adjust visible fields, layers, and camera pitch for preliminary exploration:
+In **Explore**, choose a focus under **Review focus** (the **Site, drilling & wells** choice enables Wellsite review). These workspaces adjust visible fields, layers, and camera pitch for preliminary exploration:
 
 | Workspace | Starting display and focus |
 | --- | --- |
@@ -265,10 +266,10 @@ Where geological maps overlap, use **Survey interpretation** to examine the retu
 1. Zoom to a local area and choose **Select area**.
 2. Click one corner, then the opposite corner of a rectangle. At broad zoom, an initial click moves closer; follow the on-screen corner prompt.
 3. Read **Ground footprint** for hectares/acres and bounds.
-4. Wait for **Five-point evidence check**: the center and four inset corners are queried for soil and geology.
+4. Open **Results → Ground** and wait for **Five-point evidence check**: the center and four inset corners are queried for soil and geology.
 5. Read available-data, no-record, and unavailable counts separately. International selections query SoilGrids predictions where a soil pixel exists; U.S. SSURGO records remain preferred.
 6. Choose **Export area GeoJSON** to save geometry, calculated area, sample evidence, and interpretation notes.
-7. Scroll to **Saved areas**, enter a name such as `Nigeria · northern site`, and choose **Save selected area**. Repeat in other countries. Click a saved name to reopen its footprint and run a fresh evidence check. The collection stays in this browser across reloads; export reports for backup. Removing a saved area removes its local bookmark.
+7. Open the **Areas** tab, enter a name such as `Nigeria · northern site`, and choose **Save selected area**. Repeat in other countries. Click a saved name to reopen its footprint and run a fresh evidence check. The collection stays in this browser across reloads; export reports for backup. Removing a saved area removes its local bookmark.
 
 Area is calculated on the WGS84 ellipsoid between latitude/longitude bounds, not from screen pixels. Selecting a point replaces an area, and selecting an area replaces the active point. Five successful lookups do not prove uniform conditions between samples.
 
@@ -302,7 +303,7 @@ In **Wellsite**, selecting ground queries public Utah oil and gas surface locati
 
 To inspect your own log:
 
-1. Choose **Wellsite** in Explore, open **Results**, and expand **Local LAS log · import a depth curve**.
+1. Open **Results → Logs & depth**, and expand **Local LAS log · import a depth curve**. LAS import is available with any review focus and does not require a selected point.
 2. Choose **Choose LAS file** and select a plain-text `.las` file.
 3. Select a **Curve** to view it against source-reported depth. Read duplicate/direction-changing depth notices.
 4. Choose **Clear local log** when finished.
@@ -313,7 +314,7 @@ LAS here means **Log ASCII Standard**, not a LiDAR point-cloud `.las` file. Its 
 
 ## Use enhanced 3D
 
-Choose **Try enhanced 3D** or open `/viewer` on the same server. Return using **Standard viewer**. This loads Cesium separately and supplements the standard workspace; area surveys, well lists, and LAS inspection remain in the standard viewer.
+Choose **Enhanced 3D ↗** or open `/viewer` on the same server. Return using **Standard viewer**. This loads Cesium separately and supplements the standard workspace; area surveys, well lists, and LAS inspection remain in the standard viewer.
 
 Choose presets such as **Grand Canyon**, **Uinta Basin**, **New York**, **Patagonia**, **Australian Outback**, or **Sahara**, or search. Click terrain to inspect mapped soil/geology, rendered terrain height, and an independent USGS elevation reference where available.
 

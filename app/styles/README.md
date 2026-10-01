@@ -9,6 +9,7 @@
 | `map-controls.css` | Camera controls, map feedback, map context, and surface selectors |
 | `evidence-panels.css` | Wells, area evidence, core context, LAS preview, and source panels |
 | `enhanced-viewer.css` | Viewer switch, layer status, and Cesium-specific presentation |
+| `consolidated-dashboard.css` | Standard workspace consolidation: persistent tools, evidence navigation, and responsive menu |
 | `terrain-profile.css` | Terrain profile dock, chart, controls, and mobile layout |
 
 Use one declaration per line and put new styles in the owning file. Keep
