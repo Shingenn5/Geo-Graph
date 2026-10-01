@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Geo Graph v5 — 3D Geological Explorer",
-  description: "Explore 3D terrain, buildings, mapped geology, and exportable USDA soil survey reports.",
+  title: "Geo Graph — Wellsite & Drilling",
+  description: "Explore 3D wellsite terrain, public well records, mapped surface geology, and local LAS drilling logs.",
   other: {
     "codex-preview": "development",
   },

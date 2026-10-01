@@ -22,14 +22,16 @@ try {
   assert.match(await page.locator(".mode-chip").innerText(),/NATURAL/);
   await page.unroute("**/api/tiles/**");
   results.push({standardLayers:true,rapidSwitch:true});
-  await page.getByPlaceholder("City, landmark, or coordinates").fill("40.7484, -73.9857");await page.getByRole("button",{name:"Go",exact:true}).click();
-  await page.waitForTimeout(1200);for(let i=0;i<3;i++){await page.getByRole("button",{name:"Zoom in",exact:true}).click();await page.waitForTimeout(300);}
-  const rangeResponse=page.waitForResponse(response=>response.url().includes("buildings.pmtiles")&&response.status()===206,{timeout:15000});
-  await page.getByRole("checkbox",{name:/Overture building detail/}).check();
-  await rangeResponse;
-  await page.waitForTimeout(1000);
-  await mkdir("outputs/viewer-qa",{recursive:true});await page.screenshot({path:"outputs/viewer-qa/overture-new-york.png"});
-  results.push({overtureRangeRequests:true});
+  assert.equal(await page.getByRole("button",{name:/Buildings|Construction/}).count(),0);
+  assert.equal(await page.getByRole("checkbox",{name:/Overture/}).count(),0);
+  await page.getByRole("button",{name:"Drilling",exact:true}).click();
+  await page.locator("#las-file").setInputFiles({name:"test-well.las",mimeType:"text/plain",buffer:Buffer.from(`~Version\nVERS. 2.0\n~Well\nNULL. -999.25\n~Curve\nDEPT.M : Depth\nGR.API : Gamma ray\nRHOB.G/C3 : Density\nRT.OHMM : Resistivity\n~ASCII\n1000 42 2.4 18\n1001 -999.25 2.5 19\n1002 70 2.6 20`)});
+  await page.locator(".well-log-viewer").waitFor();
+  assert.equal(await page.locator(".log-track svg").count(),3);
+  assert.match(await page.locator(".log-quality").innerText(),/MD \/ TVD UNKNOWN/);
+  await page.waitForFunction(()=>{const canvas=document.querySelector(".map canvas"),map=document.querySelector(".map");return canvas&&map&&Math.abs(canvas.getBoundingClientRect().width-map.clientWidth)<2;});
+  await mkdir("outputs/viewer-qa",{recursive:true});await page.screenshot({path:"outputs/viewer-qa/drilling-workspace.png"});
+  results.push({buildingsRemoved:true,drillingTracks:true,mapFitsDock:true});
   await page.goto(`${base}/viewer`);await page.waitForFunction(()=>window.geoGraphMetrics?.samples.some(s=>s.name==="cesium-initial-ready"));
   // Failure keeps the active natural layer instead of presenting an empty geology layer.
   await page.route("**/api/tiles/**",route=>route.fulfill({status:503,body:"Test source outage"}));

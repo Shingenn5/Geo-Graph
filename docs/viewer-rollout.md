@@ -8,7 +8,7 @@ requested source has loaded tiles for the current view. Superseded requests cann
 replace a newer selection. Country/place labels and road/waterway context remain
 separate from thematic data.
 
-The **Try enhanced 3D** link opens `/viewer`, an isolated Cesium trial. Cesium is
+The **Immersive 3D** link opens `/viewer`, an isolated Cesium trial. Cesium is
 loaded dynamically only on that route. It uses request-driven rendering, bounded
 terrain and imagery caches, lower terrain detail during camera movement, and short
 layer fades. Returning to the standard viewer releases the trial renderer.

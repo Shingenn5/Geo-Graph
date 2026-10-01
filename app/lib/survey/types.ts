@@ -144,7 +144,7 @@ export type SurveySelectionInput = {
   soil?: { status: EvidenceStatus; data?: SoilEvidence | null; source?: string; retrievedAt?: string };
   geology?: { status: EvidenceStatus; units?: GeologyUnitEvidence[]; refs?: Record<string, string>; source?: string; retrievedAt?: string };
   wells?: { status: EvidenceStatus; records?: WellEvidence[]; source?: string; retrievedAt?: string };
-  /** Optional map/building/search context, clearly kept separate from field evidence. */
+  /** Optional map/search context, clearly kept separate from field evidence. */
   context?: Array<{ label: string; value: string | number | boolean | null; source: string; kind?: EvidenceKind; method?: string }>;
 };
 

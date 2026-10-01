@@ -11,8 +11,8 @@ export type ViewerSession = {
   point: [number, number] | null;
 };
 export const DEFAULT_VIEW: ViewerSession = {
-  center: [-112.112, 36.106], zoom: 10.5, bearing: -28, pitch: 55,
-  surface: "Natural", labels: true, point: null,
+  center: [-109.99532020981788, 40.31458853576911], zoom: 12.8, bearing: -22, pitch: 55,
+  surface: "Natural", labels: true, point: [-109.99532020981788, 40.31458853576911],
 };
 
 function coordinate(value: unknown): value is [number, number] {

@@ -10,6 +10,7 @@
 | `evidence-panels.css` | Wells, area evidence, core context, LAS preview, and source panels |
 | `enhanced-viewer.css` | Viewer switch, layer status, and Cesium-specific presentation |
 | `terrain-profile.css` | Terrain profile dock, chart, controls, and mobile layout |
+| `wellsite-workspace.css` | Standard viewer field theme, wellsite layout, and LAS depth tracks; scoped to `.wellsite-workspace` |
 
 Use one declaration per line and put new styles in the owning file. Keep
 viewer-specific rules scoped to `.enhanced-viewer` and profile rules scoped to

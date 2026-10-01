@@ -1,0 +1,695 @@
+/* Deliberate field-workspace theme. Scoped to the standard viewer; Cesium keeps its own styles. */
+.wellsite-workspace {
+  --accent: #e5bc77;
+  --border: #263b43;
+  --field-muted: #9eb2ba;
+  color: #e9f0ee;
+  color-scheme: dark;
+  font-family: "Segoe UI", Arial, sans-serif;
+  background: #0b171e;
+}
+
+.wellsite-workspace header {
+  height: 72px;
+  padding: 0 28px;
+  background: #0d1b23;
+  border-color: #2d4149;
+}
+
+.wellsite-workspace .brand {
+  color: #edf4f1;
+  font-size: 17px;
+  letter-spacing: .17em;
+}
+
+.wellsite-workspace .brand-icon {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  background: #e5bc7712;
+  border: 1px solid #e5bc7755;
+  border-radius: 10px;
+}
+
+.wellsite-workspace .brand small {
+  font-size: 9px;
+  letter-spacing: .2em;
+  color: #b3c3c6;
+  margin-top: 5px;
+}
+
+.wellsite-workspace .header-note,
+.wellsite-workspace .view-readout span {
+  color: #91a7b0;
+}
+
+.wellsite-workspace .header-note b {
+  color: #d8e4e5;
+  font-weight: 500;
+}
+
+.wellsite-workspace .viewer-trial-link {
+  color: #e5bc77;
+  background: #1b2b33;
+  border-color: #45524d;
+}
+
+.wellsite-workspace .workspace {
+  grid-template-columns: 380px minmax(0, 1fr);
+  height: calc(100dvh - 72px);
+}
+
+.wellsite-workspace aside {
+  background: #101f27;
+  scrollbar-width: thin;
+  scrollbar-color: #38515a #101f27;
+}
+
+.wellsite-workspace section {
+  padding: 22px 24px;
+  border-color: #263b43;
+}
+
+.wellsite-workspace .intro {
+  background: radial-gradient(ellipse at 90% 0%, #31504766, transparent 65%), #142831;
+}
+
+.wellsite-workspace .intro h1 {
+  white-space: pre-line;
+  font-size: 36px;
+  line-height: 1.1;
+  font-weight: 600;
+  letter-spacing: -.045em;
+  color: #f3f6f1;
+}
+
+.wellsite-workspace .eyebrow,
+.wellsite-workspace .intro .eyebrow {
+  color: #e5bc77;
+  font-size: 9px;
+  letter-spacing: .18em;
+}
+
+.wellsite-workspace h2,
+.wellsite-workspace h3,
+.wellsite-workspace h4,
+.wellsite-workspace strong,
+.wellsite-workspace .selection-heading h2 {
+  color: #e9f0ee;
+}
+
+.wellsite-workspace p,
+.wellsite-workspace small,
+.wellsite-workspace dt,
+.wellsite-workspace .use-case-summary p,
+.wellsite-workspace .soil-card .muted-line,
+.wellsite-workspace .fact-grid dt,
+.wellsite-workspace .source-facts dt,
+.wellsite-workspace .well-list span,
+.wellsite-workspace .well-list small {
+  color: var(--field-muted);
+  line-height: 1.55;
+}
+
+.wellsite-workspace dd,
+.wellsite-workspace label,
+.wellsite-workspace .terrain-status b {
+  color: #d9e7e7;
+}
+
+.wellsite-workspace a {
+  color: #e5bc77;
+}
+
+.wellsite-workspace .kpi-grid {
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.wellsite-workspace .kpi-card {
+  background: #0e2028;
+  border: 1px solid #344b53;
+  border-radius: 8px;
+  box-shadow: none;
+  padding: 12px;
+}
+
+.wellsite-workspace .kpi-card span {
+  font-size: 8px;
+  color: #8fa7ae;
+  letter-spacing: .1em;
+}
+
+.wellsite-workspace .kpi-card strong {
+  font-size: 21px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: #e5bc77;
+}
+
+.wellsite-workspace input,
+.wellsite-workspace select {
+  background: #0d1c24;
+  border: 1px solid #40565f;
+  color: #e4eeec;
+  border-radius: 6px;
+}
+
+.wellsite-workspace input::placeholder {
+  color: #8aa0a9;
+}
+
+.wellsite-workspace button,
+.wellsite-workspace .log-import {
+  background: #192e38;
+  color: #d3e3e4;
+  border-color: #3a525b;
+  box-shadow: none;
+  transition: border-color 150ms, background-color 150ms;
+}
+
+.wellsite-workspace button:hover:not(:disabled) {
+  background: #29434c;
+  border-color: #839c9b;
+}
+
+.wellsite-workspace button[aria-pressed=true],
+.wellsite-workspace .workspace-tools button:first-child,
+.wellsite-workspace .search-row button {
+  background: #e5bc77;
+  color: #18262a;
+  border-color: #e5bc77;
+}
+
+.wellsite-workspace .base-switch {
+  background: #0d1c24;
+}
+
+.wellsite-workspace .use-case-tabs {
+  padding: 0;
+  background: transparent;
+}
+
+.wellsite-workspace .use-case-tab-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.wellsite-workspace .use-case-tab-row button {
+  width: 100%;
+  padding: 12px;
+  border-radius: 7px;
+  font-size: 13px;
+}
+
+.wellsite-workspace .use-case-summary,
+.wellsite-workspace .data-card,
+.wellsite-workspace .soil-profile,
+.wellsite-workspace .texture-profile,
+.wellsite-workspace .area-evidence,
+.wellsite-workspace .core-observation,
+.wellsite-workspace .source-facts,
+.wellsite-workspace .area-facts,
+.wellsite-workspace .horizon-list article {
+  background: #13252e;
+  border-color: #30464f;
+  border-radius: 9px;
+}
+
+.wellsite-workspace .use-case-summary {
+  margin-top: 14px;
+}
+
+.wellsite-workspace .use-case-summary .workspace-action {
+  font-size: 10px;
+  color: #b8cec9;
+  border-color: #30464f;
+}
+
+.wellsite-workspace .focus-fields span,
+.wellsite-workspace .selection-count,
+.wellsite-workspace .selected-badge {
+  background: #263e43;
+  color: #b7d0cb;
+  border-color: #3b575b;
+  font-size: 9px;
+}
+
+.wellsite-workspace .use-case-facts {
+  display: none;
+}
+
+.wellsite-workspace .interpretation-note {
+  font-size: 11px;
+  color: #91a6af;
+}
+
+.wellsite-workspace .terrain-status {
+  background: transparent;
+  border-color: #30464f;
+}
+
+.wellsite-workspace .terrain-status small,
+.wellsite-workspace .layer-grid small,
+.wellsite-workspace .surface-legend span {
+  color: #91a6af;
+}
+
+.wellsite-workspace .well-list {
+  max-height: 280px;
+  overflow: auto;
+  scrollbar-width: thin;
+}
+
+.wellsite-workspace .well-list button {
+  border-left: 2px solid #e5bc77;
+  padding: 12px;
+}
+
+.wellsite-workspace .focused-well {
+  margin-top: 14px;
+  border-left: 3px solid #e5bc77;
+  background: #192e38;
+}
+
+.wellsite-workspace .focused-well dl {
+  margin-bottom: 0;
+}
+
+.wellsite-workspace .soil-profile strong,
+.wellsite-workspace .texture-profile strong,
+.wellsite-workspace .horizon-list dt,
+.wellsite-workspace .horizon-list dd {
+  color: #b8cecd;
+}
+
+.wellsite-workspace .profile-track {
+  background: #30484f;
+}
+
+.wellsite-workspace .maplibregl-ctrl-bottom-left {
+  bottom: 12px;
+  left: 24px;
+}
+
+.wellsite-workspace .source-panel,
+.wellsite-workspace .wellsite-panel,
+.wellsite-workspace .core-panel,
+.wellsite-workspace .log-panel,
+.wellsite-workspace .report-export {
+  background: #101f27;
+}
+
+.wellsite-workspace .map-shell {
+  background: #10232c;
+  border: 8px solid #0d1b23;
+  border-top: 0;
+  isolation: isolate;
+}
+
+.wellsite-workspace .map {
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.wellsite-workspace .mode-chip {
+  top: 26px;
+  left: 24px;
+  padding: 15px 17px;
+  max-width: 310px;
+  border: 1px solid #c6d4bd38;
+  border-radius: 10px;
+  background: #10252bed;
+  box-shadow: 0 8px 30px #0004;
+  backdrop-filter: blur(18px);
+}
+
+.wellsite-workspace .mode-chip span {
+  color: #e5bc77;
+  letter-spacing: .14em;
+  font-size: 9px;
+}
+
+.wellsite-workspace .mode-chip strong {
+  font-size: 18px;
+  line-height: 1.3;
+  font-weight: 500;
+}
+
+.wellsite-workspace .map-operation-label {
+  position: absolute;
+  right: 20px;
+  bottom: 27px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #d8e8e1;
+  font-size: 9px;
+  letter-spacing: .14em;
+  padding: 10px 13px;
+  background: #10252bed;
+  border: 1px solid #77988d55;
+  border-radius: 6px;
+}
+
+.wellsite-workspace .operation-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #83d6af;
+}
+
+.wellsite-workspace .camera-tools {
+  top: 152px;
+  left: 24px;
+  right: auto;
+  max-width: 390px;
+  justify-content: flex-start;
+}
+
+.wellsite-workspace .camera-tools button {
+  font-size: 11px;
+  padding: 10px 12px;
+  background: #112931ed;
+  border: 1px solid #849d9055;
+  border-radius: 7px;
+  backdrop-filter: blur(12px);
+}
+
+.wellsite-workspace .camera-tools .primary-camera,
+.wellsite-workspace .camera-tools button[aria-pressed=true] {
+  background: #e5bc77;
+  color: #18262a;
+  border-color: #e5bc77;
+}
+
+.wellsite-workspace .selection-summary {
+  left: 24px;
+  right: 24px;
+  bottom: 108px;
+  background: #10252bf2;
+  border: 1px solid #b4c1a355;
+  border-radius: 9px;
+  padding: 13px 16px;
+  color: #e2ece8;
+}
+
+.wellsite-workspace .selection-summary strong {
+  color: #e5bc77;
+}
+
+.wellsite-workspace .map-help {
+  left: 24px;
+  bottom: 76px;
+  font-size: 10px;
+  color: #e2eeeb;
+  background: #10252bcc;
+  border-radius: 5px;
+}
+
+.wellsite-workspace .well-map-legend {
+  position: absolute;
+  left: 24px;
+  bottom: 45px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 10px;
+  color: #e1ece7;
+  padding: 8px 11px;
+  background: #10252bed;
+  border-radius: 5px;
+}
+
+.wellsite-workspace .well-map-legend i {
+  width: 9px;
+  height: 9px;
+  border: 2px solid #e5bc77;
+  border-radius: 50%;
+  background: #153b43;
+}
+
+.wellsite-workspace .well-map-legend b {
+  color: #a2b8ba;
+  font-weight: 400;
+}
+
+.wellsite-workspace .log-import {
+  margin: 18px 0;
+  padding: 13px;
+  text-align: center;
+  border: 1px dashed #e5bc7780;
+  border-radius: 8px;
+  color: #e5bc77;
+  cursor: pointer;
+}
+
+.wellsite-workspace .log-empty {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 10px;
+  padding: 28px 20px;
+  border: 1px solid #30464f;
+  border-radius: 9px;
+  background: #0d1c24;
+  text-align: center;
+}
+
+.wellsite-workspace .log-empty > span:last-child {
+  color: #9eb2ba;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.wellsite-workspace .log-empty-tracks {
+  display: flex;
+  gap: 6px;
+  height: 65px;
+  opacity: .6;
+}
+
+.wellsite-workspace .log-empty-tracks i {
+  width: 26px;
+  border: 1px solid #516d72;
+  background: repeating-linear-gradient(0deg, transparent 0 12px, #354d5622 12px 13px);
+}
+
+.wellsite-workspace .log-file-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 16px;
+  overflow-wrap: anywhere;
+  font-size: 12px;
+}
+
+.wellsite-workspace .log-file-summary span {
+  color: #9eb2ba;
+}
+
+.wellsite-workspace .log-track-controls {
+  display: flex;
+  gap: 6px;
+  padding-left: 44px;
+}
+
+.wellsite-workspace .log-track-controls label {
+  flex: 1;
+  min-width: 0;
+}
+
+.wellsite-workspace .log-track-controls label > span {
+  display: block;
+  font-size: 8px;
+  letter-spacing: .12em;
+  margin-bottom: 5px;
+}
+
+.wellsite-workspace .log-track-controls select {
+  width: 100%;
+  font-size: 10px;
+  padding: 8px 3px;
+}
+
+.wellsite-workspace .log-tracks {
+  display: grid;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.wellsite-workspace .log-depth-axis > b {
+  display: block;
+  height: 28px;
+  padding-top: 8px;
+  color: #a0b4bb;
+  font-size: 9px;
+}
+
+.wellsite-workspace .log-depth-axis > div {
+  position: relative;
+  height: 484px;
+  margin-top: 8px;
+}
+
+.wellsite-workspace .log-depth-axis span {
+  position: absolute;
+  transform: translateY(-50%);
+  font-size: 9px;
+  color: #98b1bb;
+  font-variant-numeric: tabular-nums;
+}
+
+.wellsite-workspace .log-range {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 28px;
+  font-size: 8px;
+  font-variant-numeric: tabular-nums;
+  gap: 3px;
+}
+
+.wellsite-workspace .log-range b {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wellsite-workspace .log-track svg {
+  width: 100%;
+  height: 500px;
+  background: #0b1c24;
+  border: 1px solid #324b54;
+  border-radius: 4px;
+}
+
+.wellsite-workspace .log-grid-minor {
+  stroke: #263d46;
+  stroke-width: .5;
+  vector-effect: non-scaling-stroke;
+}
+
+.wellsite-workspace .log-grid-major {
+  stroke: #45606a;
+  stroke-width: .7;
+  vector-effect: non-scaling-stroke;
+}
+
+.wellsite-workspace .log-track > small {
+  display: block;
+  font-size: 8px;
+  margin-top: 5px;
+}
+
+.wellsite-workspace .log-quality {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 8px;
+  color: #9eb2ba;
+  letter-spacing: .07em;
+  padding: 16px 0;
+}
+
+@media (min-width: 1440px) {
+  .wellsite-workspace.drilling-active .map-shell {
+    margin-right: 420px;
+  }
+
+  .wellsite-workspace.drilling-active .log-panel {
+    position: fixed;
+    top: 88px;
+    right: 16px;
+    width: 396px;
+    max-height: calc(100dvh - 104px);
+    overflow: auto;
+    z-index: 3;
+    border: 1px solid #344b53;
+    border-radius: 12px;
+    scrollbar-width: thin;
+    box-shadow: 0 12px 40px #0003;
+  }
+}
+
+@media (max-width: 1100px) {
+  .wellsite-workspace .workspace {
+    grid-template-columns: 330px minmax(0, 1fr);
+  }
+
+  .wellsite-workspace .header-note {
+    display: none;
+  }
+
+  .wellsite-workspace .map-operation-label {
+    display: none;
+  }
+}
+
+@media (max-width: 760px) {
+  .wellsite-workspace header {
+    height: 64px;
+    padding: 0 14px;
+    gap: 10px;
+  }
+
+  .wellsite-workspace .brand {
+    font-size: 13px;
+  }
+
+  .wellsite-workspace .view-readout {
+    display: none;
+  }
+
+  .wellsite-workspace .viewer-trial-link {
+    margin-left: auto;
+    font-size: 10px;
+  }
+
+  .wellsite-workspace .workspace {
+    display: flex;
+    flex-direction: column-reverse;
+    height: auto;
+  }
+
+  .wellsite-workspace .map-shell {
+    flex: none;
+    height: 70dvh;
+    min-height: 520px;
+    border: 0;
+  }
+
+  .wellsite-workspace aside {
+    overflow: visible;
+  }
+
+  .wellsite-workspace .camera-tools {
+    left: 16px;
+    right: 16px;
+    top: 152px;
+  }
+
+  .wellsite-workspace .mode-chip,
+  .wellsite-workspace .map-help,
+  .wellsite-workspace .well-map-legend {
+    left: 16px;
+  }
+
+  .wellsite-workspace .well-map-legend b {
+    display: none;
+  }
+
+  .wellsite-workspace .selection-summary {
+    left: 16px;
+    right: 16px;
+    bottom: 90px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wellsite-workspace button {
+    transition: none;
+  }
+}

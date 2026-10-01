@@ -1,6 +1,6 @@
 # Geo Graph
 
-**Explore 3D terrain, inspect published ground evidence, and export what you find.**
+**Explore wellsite terrain, inspect public wells, and compare drilling logs.**
 
 Geo Graph is a browser-based field survey workspace. The standard MapLibre viewer combines terrain, imagery, mapped soil, surface geology, and public well records. An optional Cesium viewer adds globe navigation and interactive terrain profiles. The Uinta Basin pilot gives you a starting point with real public data.
 
@@ -37,11 +37,11 @@ This repository contains application source and local launchers. Running it star
 | Navigate terrain, imagery, and published map layers | Both viewers |
 | Search for places or enter coordinates | Both viewers |
 | Inspect soil, surface geology, and elevation context at a point | Both viewers |
-| Switch among Overview, Wellsite, Agriculture, Water, Construction, and Environment | Standard viewer |
-| Compare nearby public Utah oil and gas well records | Standard viewer, Wellsite workspace |
+| Switch between Wellsite and Drilling | Standard viewer |
+| Compare nearby public Utah oil and gas well records | Standard viewer, both workspaces |
 | Select a rectangular area and sample five positions | Standard viewer |
 | Export a point report, JSON, GeoJSON, or soil-profile report | Standard viewer |
-| Preview a local LAS 2.0 depth curve and regional research-core reference | Standard viewer, Wellsite workspace |
+| Compare three local LAS 2.0 depth tracks and a regional research-core reference | Standard viewer, Drilling workspace |
 | Draw an elevation profile and export its samples as CSV | Enhanced 3D |
 | Compare land cover and a USGS relief overlay | Enhanced 3D |
 
@@ -193,7 +193,7 @@ Use the [five-minute interview guide](docs/interview-demo.md) and [dated validat
 5. In **Nearby wells**, choose a record to inspect its published surface location. This selects a new point and refreshes the evidence.
 6. Read **What supports this view?** for imagery catalog context and the independent USGS elevation check.
 7. Find **Take this survey with you.**, choose **Printable survey** or **JSON**, and save the file.
-8. Choose **Try enhanced 3D**, select **Grand Canyon**, and draw a terrain profile using the steps below.
+8. Choose **Immersive 3D**, select **Grand Canyon**, and draw a terrain profile using the steps below.
 
 On smaller displays, scroll to reach the sidebar and map tools. The map's selected-point summary includes **View details ↓** to move to the corresponding sidebar section.
 
@@ -235,14 +235,10 @@ Workspaces adjust visible fields, layers, and camera pitch for preliminary explo
 
 | Workspace | Starting display and focus |
 | --- | --- |
-| Overview | Natural imagery; map unit, texture, drainage, and representative slope. |
-| Wellsite | Geology, contours, and faults; surface mapping and public Utah wells. |
-| Agriculture | Soil boundaries and a more overhead view; texture, pH, organic matter, and hydrologic group. |
-| Water | Bare Earth and contours; drainage, flooding, ponding, and hydrologic context. |
-| Construction | Geology, contours, and faults; mapped slope, horizons, texture, and drainage. |
-| Environment | Natural imagery and contours; taxonomy and surface soil context. |
+| Wellsite | Natural imagery and 3D terrain; selectable public Utah well locations and surface mapping. |
+| Drilling | Geology, contours, faults, and a three-track local LAS log studio. On screens at least 1,440 pixels wide, the studio docks beside the map. |
 
-These are display/review presets, not professional assessments.
+New sessions start in the Uinta Basin near Roosevelt, Utah, with a point selected for live public-data lookups. Existing camera and selection state is preserved. These are display/review presets, not professional assessments.
 
 ### Inspect a point
 
@@ -277,23 +273,21 @@ Area is calculated on the WGS84 ellipsoid between latitude/longitude bounds, not
 | Contours | Elevation contour lines. |
 | Borders | Country and state boundaries. |
 | Faults | Published U.S. Quaternary fault mapping. |
-| Buildings | Optional building detail where mapped. |
-| Overture building detail · trial | An additional experimental building source. |
 | PBR material study | Illustrative close-range material on steep terrain. |
 
-The material study uses Natural/satellite at close zoom. Its rock texture is a visual experiment, not a geological classification. Optional buildings and overlays add loading work; enable them when they help your task. If a replacement surface cannot load, the previous committed view stays visible with a status message.
+The material study uses Natural/satellite at close zoom. Its rock texture is a visual experiment, not a geological classification. Optional overlays add loading work; enable them when they help your task. If a replacement surface cannot load, the previous committed view stays visible with a status message.
 
 ### Wells, research core, and LAS logs
 
-In **Wellsite**, selecting ground queries public Utah oil and gas surface locations within **15 km** and displays up to **12** nearby records returned by the source. Read any truncation/service-limit notice and follow the source before treating the list as complete or current. It is a Utah surface-location dataset, not a national inventory or well-trajectory model.
+In **Wellsite** and **Drilling**, selecting ground queries public Utah oil and gas surface locations within **15 km** and displays up to **12** nearby records returned by the source. Read any truncation/service-limit notice and follow the source before treating the list as complete or current. It is a Utah surface-location dataset, not a national inventory or well-trajectory model.
 
 **Skyline 16** is separately sourced Utah Geological Survey research context. Its selectable Mahogany-bed observation is a regional reference; the core has not been tied to your selected point or a displayed well.
 
 To inspect your own log:
 
-1. Open **Wellsite** and find **Inspect a depth curve**.
-2. Choose **Choose LAS file** and select a plain-text `.las` file.
-3. Select a **Curve** to view it against source-reported depth. Read duplicate/direction-changing depth notices.
+1. Open **Drilling** and find **Well log studio**.
+2. Choose **Import LAS log** and select a plain-text `.las` file.
+3. Choose curves for up to three aligned tracks. Each track uses its own linear source-value range and the same source depth axis. NULL values and flagged depth rows split the curves; min/max decimation retains narrow spikes. Read duplicate/direction-changing depth notices.
 4. Choose **Clear local log** when finished.
 
 The reader supports ASCII **LAS 2.0**, with a single explicit `DEPT` or `DEPTH` curve declaring its unit and at least one other curve. Limits are **5 MB of text**, **250,000 rows**, and **256 curves**. Each ASCII row must contain the declared number of values. Binary content and malformed rows are rejected.

@@ -11,7 +11,6 @@ export const TEST_PLACES = [
   { name: "Sahara", longitude: -5.5, latitude: 30.5, height: 14000 },
 ];
 export const WORLDCOVER_LAYER = "esa-worldcover-map-10m-2021-v2_map";
-export const OVERTURE_BUILDINGS = "https://overturemaps-extras-us-west-2.s3.us-west-2.amazonaws.com/tiles/2026-09-23.0/buildings.pmtiles";
 export const CLEAR_IMAGERY_URL = "https://clarity.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
 export const SURFACE_DETAILS: Record<Surface, string> = {
   Natural: "Esri imagery over Re:Earth / Mapterhorn terrain. Imagery detail varies by location.",

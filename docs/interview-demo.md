@@ -29,7 +29,7 @@ data services require internet access; this is not an offline tile package.
 3. **Area:** choose **Select area** and click two nearby corners. Show the area
    calculation and five point samples. Explain that these probes do not establish
    uniform conditions throughout the polygon.
-4. **Enhanced 3D:** choose **Try enhanced 3D**, then **Grand Canyon**. Demonstrate
+4. **Enhanced 3D:** choose **Immersive 3D**, then **Grand Canyon**. Demonstrate
    World/Region/Ground navigation and **Bare Earth**, then return to **Natural**.
 5. **Terrain profile:** select two nearby ground points, show the elevation chart,
    move its position slider, and export CSV. Heights use an ellipsoidal reference;
