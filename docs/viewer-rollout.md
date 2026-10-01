@@ -40,16 +40,18 @@ remain in the standard viewer.
 - **USGS relief:** 3DEP multidirectional hillshade through a fixed-source,
   validated same-origin tile endpoint. It changes imagery, not terrain geometry.
   Current trial coverage is the contiguous U.S.
-- **Overture buildings:** optional standard-viewer inspection layer, pinned to
-  the 2026-09-23.0 PMTiles release. It loads only when enabled and zoomed in.
-  Heights may be estimated where source heights are missing. These inspection
-  tiles are not a production basemap guarantee.
 
 Point inspection loads soil, geology, and elevation independently. The trial's
 elevation-only provenance request avoids waiting for the unrelated imagery
 catalog. Unknown datum, unavailable records, and no-record results remain distinct.
 
 ## Verification
+
+The timing measurements below describe the earlier viewer rollout. The subsequent
+wellsite/drilling redesign removed building layers and added aligned LAS tracks.
+Its 33 regression tests, type checks, lint, production build, and local well API
+check passed. The updated browser interaction script has not been run for that
+redesign, so these earlier measurements are not visual verification of the new UI.
 
 Local production builds were compared against unchanged commit
 `447a6013291326516a8fea2e13e7b64e6b90178a` using headless Microsoft Edge at
@@ -64,8 +66,9 @@ Returning to natural imagery took about 0.19 s; repeat geology took 0.64–0.80 
 Upstream latency remains visible. Camera frame timing varied between runs;
 no universal frame-rate or sub-second cold-transition claim is made.
 
-Interaction checks cover standard layer changes, rapid superseding selections,
-Overture HTTP range loading, retaining the previous Cesium surface during a source
+The current interaction script covers standard layer changes, rapid superseding
+selections, building-control removal, LAS tracks, map sizing beside the drilling
+dock, and retaining the previous Cesium surface during a source
 outage, and a 390 px mobile layout. Automated checks also cover bounded cache
 eviction/expiry, abort handling, stale transition rejection, positive source
 coverage, independent elevation provenance, and existing geometry/area/LAS logic.
