@@ -18,7 +18,7 @@ export const SURFACE_DETAILS: Record<Surface, string> = {
   "Clear imagery": "Esri World Imagery (Clarity) archive. It may look clearer in some places, but can be older or identical to current imagery. Native detail varies; no new resolution is created.",
   "Bare Earth": "Elevation-colored terrain. Colors represent height, not rock type or measured soil color.",
   Geology: "Macrostrat and original survey authors · CC BY 4.0. Mapped surface geology; map scale varies.",
-  Soil: "USDA SSURGO map units · U.S. survey coverage. A map unit can contain several soil components.",
+  Soil: "ISRIC SoilGrids global predicted pH at 0–5 cm · 250 m · CC BY 4.0. Model estimates, not measured borehole conditions. Select ground for six depth intervals to 2 m.",
   "Land cover": "ESA WorldCover 2021 · 10 m classification · CC BY 4.0. Historical land cover, not live imagery. Tree cover, shrubland, grassland, cropland, built-up, bare ground, snow/ice, water, wetland, mangroves and moss/lichen.",
   "USGS relief": "USGS 3DEP multidirectional hillshade · U.S. coverage. This image shows USGS relief; the underlying 3D mesh remains Re:Earth terrain.",
 };

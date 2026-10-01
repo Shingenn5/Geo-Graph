@@ -57,6 +57,9 @@ export async function GET(request: Request) {
     return Response.json({ error: "Provide valid coordinates, radiusKm (0.1–25), and limit (1–50)." }, { status: 400 });
   }
 
+  if (lng < -114.5 || lng > -108.75 || lat < 36.75 || lat > 42.25) {
+    return Response.json({ wells: [], source: UTAH_WELL_SOURCE, coverage: { status: "not-supported", radiusKm, count: 0, truncated: false, sourceLimitReached: false } }, { headers: { "Cache-Control": "public, max-age=86400" } });
+  }
   const query = new URLSearchParams({
     f: "json",
     where: "Confidential IS NULL OR Confidential IN ('No', 'N', '')",

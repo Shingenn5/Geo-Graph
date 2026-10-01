@@ -141,7 +141,7 @@ export type SurveySelectionInput = {
   coordinates: SurveyCoordinates;
   selectedAt?: string;
   /** `null` with status `unavailable` differs from a lookup not yet attempted. */
-  soil?: { status: EvidenceStatus; data?: SoilEvidence | null; source?: string; retrievedAt?: string };
+  soil?: { status: EvidenceStatus; data?: SoilEvidence | null; source?: string; retrievedAt?: string; kind?: EvidenceKind };
   geology?: { status: EvidenceStatus; units?: GeologyUnitEvidence[]; refs?: Record<string, string>; source?: string; retrievedAt?: string };
   wells?: { status: EvidenceStatus; records?: WellEvidence[]; source?: string; retrievedAt?: string };
   /** Optional map/building/search context, clearly kept separate from field evidence. */

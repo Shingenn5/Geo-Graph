@@ -20,9 +20,9 @@ function isPresent(value: unknown): boolean {
 
 function addRecordFields(
   output: EvidenceValue[], domain: EvidenceDomain, data: Record<string, unknown>, source: string,
-  retrievedAt?: string, href?: string,
+  retrievedAt?: string, href?: string, kind: Provenance["kind"] = "observed",
 ) {
-  const provenance: Provenance = { kind: "observed", source, ...(href ? { href } : {}), ...(retrievedAt ? { retrievedAt } : {}) };
+  const provenance: Provenance = { kind, source, ...(href ? { href } : {}), ...(retrievedAt ? { retrievedAt } : {}) };
   for (const [label, value] of Object.entries(data)) {
     if (label === "horizons" || value === undefined) continue;
     output.push({
@@ -43,13 +43,13 @@ export function createSurveySelection(input: SurveySelectionInput): SurveySelect
 
   const soilStatus = input.soil?.status ?? "not-queried";
   const soilSource = input.soil?.source ?? SOIL_SOURCE;
-  const soilProvenance: Provenance = { kind: "observed", source: soilSource, ...(input.soil?.retrievedAt ? { retrievedAt: input.soil.retrievedAt } : {}) };
+  const soilProvenance: Provenance = { kind: input.soil?.kind ?? "observed", source: soilSource, ...(input.soil?.retrievedAt ? { retrievedAt: input.soil.retrievedAt } : {}) };
   sources.push(soilProvenance);
   if (input.soil?.data) {
-    addRecordFields(evidence, "soil", input.soil.data as Record<string, unknown>, soilSource, input.soil.retrievedAt);
+    addRecordFields(evidence, "soil", input.soil.data as Record<string, unknown>, soilSource, input.soil.retrievedAt, undefined, input.soil.kind);
     for (const [index, horizon] of (input.soil.data.horizons ?? []).entries()) {
       const evidenceStart = evidence.length;
-      addRecordFields(evidence, "soil", horizon as Record<string, unknown>, soilSource, input.soil.retrievedAt);
+      addRecordFields(evidence, "soil", horizon as Record<string, unknown>, soilSource, input.soil.retrievedAt, undefined, input.soil.kind);
       // Include a stable, explicit path while retaining a simple label for renderers.
       for (const item of evidence.slice(evidenceStart)) item.label = `Horizon ${index + 1} · ${item.label}`;
     }

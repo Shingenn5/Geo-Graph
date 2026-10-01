@@ -266,8 +266,9 @@ Where geological maps overlap, use **Survey interpretation** to examine the retu
 2. Click one corner, then the opposite corner of a rectangle. At broad zoom, an initial click moves closer; follow the on-screen corner prompt.
 3. Read **Ground footprint** for hectares/acres and bounds.
 4. Wait for **Five-point evidence check**: the center and four inset corners are queried for soil and geology.
-5. Read mapped, no-record, and unavailable counts separately.
+5. Read available-data, no-record, and unavailable counts separately. International selections query SoilGrids predictions where a soil pixel exists; U.S. SSURGO records remain preferred.
 6. Choose **Export area GeoJSON** to save geometry, calculated area, sample evidence, and interpretation notes.
+7. Scroll to **Saved areas**, enter a name such as `Nigeria · northern site`, and choose **Save selected area**. Repeat in other countries. Click a saved name to reopen its footprint and run a fresh evidence check. The collection stays in this browser across reloads; export reports for backup. Removing a saved area removes its local bookmark.
 
 Area is calculated on the WGS84 ellipsoid between latitude/longitude bounds, not from screen pixels. Selecting a point replaces an area, and selecting an area replaces the active point. Five successful lookups do not prove uniform conditions between samples.
 
@@ -280,7 +281,7 @@ Open **Layers** to access these controls. Your selected point or area remains av
 | Natural | Esri imagery over Mapterhorn terrain. |
 | Bare Earth | Elevation coloring and relief; colors represent height. |
 | Geology | Macrostrat surface geological mapping. |
-| Soil | USDA SSURGO polygons where U.S. survey coverage exists. |
+| Soil | Global SoilGrids predicted surface pH (0–5 cm, 250 m), with USDA SSURGO boundaries in the U.S. Select ground for pH at six depth intervals to 2 m and surface sand/silt/clay. |
 | Clear imagery · archive | Optional Esri Clarity underlay; it may be older, clearer, or similar. |
 | USGS topo · U.S. | Optional U.S. topographic underlay. |
 | USGS aerial | Optional U.S. NAIP Plus imagery with varying coverage. |
@@ -470,7 +471,7 @@ Building locally or pushing GitHub does **not** publish a new hosted version. De
 | Standard terrain | Mapterhorn/source contributors; native resolution and vertical datum vary by tile. |
 | Enhanced terrain/profile | Re:Earth / Mapterhorn ellipsoidal terrain; profile heights reference WGS84. |
 | Natural/Clarity imagery | Esri and credited contributors; acquisition age and native detail vary. |
-| Soil | USDA NRCS Soil Data Access / SSURGO mapped units/components/horizons; U.S. coverage varies. |
+| Soil | USDA NRCS SSURGO records where available; [ISRIC SoilGrids](https://docs.isric.org/globaldata/soilgrids/index.html) global 250 m predictions otherwise. Uses WMS GetFeatureInfo, not the paused REST API. Model values are marked derived in reports. Coverage excludes masked/no-soil pixels. |
 | Surface geology | Macrostrat and original survey authors; map scales and interpretations vary. |
 | Faults | USGS Quaternary Fault and Fold Database mapping in the U.S. |
 | Utah wells | UGRC SGID / Utah DNR-OGM public surface locations; the API filters flagged confidential records. |
@@ -505,3 +506,9 @@ Retain attribution and observe provider terms when sharing exports/screenshots. 
 ## TL;DR
 
 Download and extract the repository, install Node.js 22.13+, run **Install Geo Graph.cmd**, then **Start Geo Graph.cmd**. Keep its terminal open and use `http://127.0.0.1:5173`. Start with the **Uinta Basin public-data pilot**. For a presentation, run `npm run demo:prepare`, launch **Demo Geo Graph.cmd**, then run `npm run demo:check`. Internet is required for live maps and evidence.
+
+### Worldwide coverage and missing tiles
+
+Area selection and saved areas are not restricted to the United States. Global terrain and imagery reuse geographically aligned lower-resolution parent tiles when detailed tiles return missing coverage; magnifying a parent does not create new detail. The standard viewer caps elevation requests at provider level 17 and shares cached downloads with shading. Shading uses a separate lower-detail source to preserve rendering quality. Service outages remain errors, rather than being treated as missing coverage.
+
+International soil screening is a model prediction, not a borehole log. SoilGrids pH is queried at 0–5, 5–15, 15–30, 30–60, 60–100, and 100–200 cm; texture fractions are queried only at 0–5 cm. Predictions are 250 m resolution and uncertainty bounds are not yet included. Surface geology depends on Macrostrat map coverage. Public well integration currently covers Utah only; elsewhere the app explicitly identifies the missing registry integration, and local LAS files can be inspected. No product can guarantee observed subsurface data at every coordinate.

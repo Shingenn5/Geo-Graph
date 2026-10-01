@@ -1,3 +1,4 @@
+import { globalSoil } from "../../lib/soil/global.ts";
 import { parseSoilTable } from "../../lib/soil/response.ts";
 
 function numberOrNull(value: string | null | undefined) {
@@ -14,6 +15,16 @@ export async function GET(request: Request) {
     return Response.json({ error: "Invalid coordinates" }, { status: 400 });
   }
 
+  const globalResponse = async () => {
+    try { return Response.json(await globalSoil(lng, lat), { headers: { "Cache-Control": "public, max-age=86400" } }); }
+    catch { return Response.json({ error: "Global soil service unavailable" }, { status: 502, headers: { "Cache-Control": "no-store" } }); }
+  };
+  // Avoid sending international selections through a U.S.-only survey service.
+  const usRegion = (lng >= -125 && lng <= -66 && lat >= 24 && lat <= 49.5)
+    || (lng >= -180 && lng <= -129 && lat >= 51 && lat <= 72)
+    || (lng >= -161 && lng <= -154 && lat >= 18 && lat <= 23)
+    || (lng >= -68 && lng <= -64 && lat >= 17 && lat <= 19);
+  if (!usRegion) return globalResponse();
   const point = `POINT(${lng.toFixed(6)} ${lat.toFixed(6)})`;
   const query = `
 SELECT
@@ -55,7 +66,7 @@ ORDER BY hz.hzdept_r, hz.hzdepb_r`;
     if (!response.ok) throw new Error("Upstream failed");
     const rows = parseSoilTable(await response.json());
     if (!rows.length) {
-      return Response.json({ soil: null }, { headers: { "Cache-Control": "public, max-age=86400" } });
+      return globalResponse();
     }
     const row = rows[0];
     const horizons = rows.filter(item => item.chkey).map(item => ({

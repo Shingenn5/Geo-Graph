@@ -905,3 +905,22 @@
   color: #294951;
   overflow-wrap: anywhere;
 }
+.survey-dashboard .saved-area-library input {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  margin: 6px 0;
+  border: 1px solid #cbdcde;
+  border-radius: 6px;
+}
+.survey-dashboard .saved-area-library button {
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid #cbdcde;
+  border-radius: 6px;
+  color: #176775;
+  background: #f4faf9;
+  cursor: pointer;
+}
+.survey-dashboard .saved-area-row { display: flex; gap: 6px; margin-top: 8px; }
+.survey-dashboard .saved-area-row button:first-child { flex: 1; text-align: left; overflow-wrap: anywhere; }

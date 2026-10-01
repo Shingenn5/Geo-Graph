@@ -14,6 +14,7 @@ test("soil API distinguishes upstream failure, empty coverage, and unknown obser
       [{ Table: [headers, ["1", "Mapped soil", null, null, "None", "1"]] }, 200],
     ] as const) {
       globalThis.fetch = async (_input, init) => {
+        if (!init?.body) return new Response("\n", { status: 200 });
         const { query } = JSON.parse(String(init?.body));
         // Only source-reported None is allowed; absent monthly rows stay SQL NULL.
         assert.doesNotMatch(query, /COALESCE\(\(SELECT TOP 1 cm\.(flod|pond)freqcl/);

@@ -29,7 +29,7 @@ export class TileCoverage {
 
 /** Loaded state alone can include failed tiles; require successful center coverage too. */
 export function hasLayerCoverage(sources: string[], center: {lng:number;lat:number}, zoom:number, evidence: TileCoverage, isLoaded: (source:string)=>boolean) {
-  const maximumLevel: Record<string, number> = {satellite:19,clarity:19,topo:16,geology:14,soilSurvey:17};
+  const maximumLevel: Record<string, number> = {satellite:19,clarity:19,topo:16,geology:14,soilSurvey:17,globalSoil:12};
   return sources.every(source => isLoaded(source) && evidence.covers(source, center.lng, center.lat,
     Math.max(0, Math.min(Math.floor(zoom), maximumLevel[source] ?? 19))));
 }

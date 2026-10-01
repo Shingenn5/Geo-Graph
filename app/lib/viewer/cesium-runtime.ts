@@ -116,10 +116,10 @@ export function createScene(container: HTMLElement, callbacks: SceneCallbacks) {
     }).catch(() => { if (!disposed) callbacks.terrain("Terrain service unavailable. Globe shown without elevation; standard viewer remains available."); });
 
   function provider(surface: Surface): C.ImageryProvider {
-    if(surface === "Natural") return new C.UrlTemplateImageryProvider({url:"https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",maximumLevel:19,credit:"Imagery © Esri, Maxar, Earthstar Geographics and GIS User Community"});
-    if(surface === "Clear imagery") return new C.UrlTemplateImageryProvider({url:CLEAR_IMAGERY_URL,maximumLevel:19,credit:"World Imagery (Clarity) archive © Esri, Vantor, Earthstar Geographics, IGN and GIS User Community"});
+    if(surface === "Natural") return new C.UrlTemplateImageryProvider({url:"https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}?blankTile=false",maximumLevel:17,credit:"Imagery © Esri, Maxar, Earthstar Geographics and GIS User Community"});
+    if(surface === "Clear imagery") return new C.UrlTemplateImageryProvider({url:CLEAR_IMAGERY_URL+"?blankTile=false",maximumLevel:17,credit:"World Imagery (Clarity) archive © Esri, Vantor, Earthstar Geographics, IGN and GIS User Community"});
     if(surface === "Geology") return new C.UrlTemplateImageryProvider({url:`${location.origin}/api/tiles/{z}/{x}/{y}`,maximumLevel:14,credit:"Macrostrat and original survey authors · CC BY 4.0"});
-    if(surface === "Soil") return new C.WebMapServiceImageryProvider({url:"https://SDMDataAccess.sc.egov.usda.gov/Spatial/SDM.wms",layers:"mapunitpoly",parameters:{transparent:true,format:"image/png",version:"1.1.1"},rectangle:C.Rectangle.fromDegrees(-180,17,-65,72),maximumLevel:17,credit:"USDA NRCS SSURGO"});
+    if(surface === "Soil") return new C.WebMapServiceImageryProvider({url:"https://maps.isric.org/mapserv?map=/map/phh2o.map",layers:"phh2o_0-5cm_mean",parameters:{transparent:true,format:"image/png",version:"1.1.1"},maximumLevel:12,credit:"ISRIC SoilGrids 2.0 · predicted pH 0–5 cm · 250 m · CC BY 4.0"});
     if(surface === "Land cover") return new C.WebMapServiceImageryProvider({url:"https://mapproxy.terrascope.be/mapproxy/service",layers:WORLDCOVER_LAYER,parameters:{transparent:true,format:"image/png",version:"1.1.1",time:"2021-01-01"},maximumLevel:14,credit:"© ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium"});
     return new C.UrlTemplateImageryProvider({url:`${location.origin}/api/relief/{z}/{x}/{y}`,tilingScheme:new C.WebMercatorTilingScheme(),rectangle:C.Rectangle.fromDegrees(-125,24,-66,50),maximumLevel:15,credit:"USGS 3DEP hillshade (imagery overlay)"});
   }
@@ -139,7 +139,7 @@ export function createScene(container: HTMLElement, callbacks: SceneCallbacks) {
     if(next==="Bare Earth"){commit(next);callbacks.status("");recordMetric("cesium-layer-"+next,switchStarted);return;}
     const center=groundCenter();
     const longitude=C.Math.toDegrees(center.longitude),latitude=C.Math.toDegrees(center.latitude);
-    if((next==="Soil"&&(longitude< -180||longitude> -65||latitude<17||latitude>72))||(next==="USGS relief"&&(longitude< -125||longitude> -66||latitude<24||latitude>50))){
+    if((next==="USGS relief"&&(longitude< -125||longitude> -66||latitude<24||latitude>50))){
       callbacks.status("This layer covers the U.S. Previous view retained.");return;
     }
     callbacks.status(`Loading ${next}…`);
