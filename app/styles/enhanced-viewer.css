@@ -1,7 +1,7 @@
 /* Viewer switch, layer status, and Cesium trial presentation. */
 
 .viewer-trial-link {
-  color: #127486;
+  color: var(--theme-accent,#127486);
   font-size: 12px;
   font-weight: 700;
   white-space: nowrap;
@@ -14,9 +14,9 @@
   bottom: 72px;
   max-width: calc(100% - 44px);
   padding: 10px 14px;
-  background: #fff8e5;
-  color: #443b1b;
-  border: 1px solid #dbc27e;
+  background: var(--theme-raised,#fff8e5);
+  color: var(--theme-text,#443b1b);
+  border: 1px solid var(--theme-border,#dbc27e);
   border-radius: 8px;
   font-size: 12px;
   z-index: 4;
@@ -43,10 +43,10 @@
 
 .enhanced-viewer .trial-surfaces button,
 .trial-place {
-  border: 1px solid #cbdcde;
+  border: 1px solid var(--theme-border,#cbdcde);
   border-radius: 8px;
-  background: white;
-  color: #234d59;
+  background: var(--theme-surface,white);
+  color: var(--theme-accent,#234d59);
   font-size: 12px;
   padding: 9px 12px;
 }
@@ -81,7 +81,7 @@
 }
 
 .trial-facts dt {
-  color: #607780;
+  color: var(--theme-muted,#607780);
 }
 
 .enhanced-viewer h2 {
@@ -99,7 +99,7 @@
 
 .enhanced-viewer .inspector small {
   font-size: 11px;
-  color: #61747e;
+  color: var(--theme-muted,#61747e);
 }
 
 .trial-place {

@@ -3,7 +3,7 @@
   height: 100dvh;
 }
 .consolidated-dashboard .sidebar-scroll {
-  background: #fbfcfc;
+  background: var(--theme-surface,#fbfcfc);
 }
 .consolidated-dashboard .workspace-brand {
   display: flex;
@@ -21,7 +21,7 @@
 }
 .workspace-viewer {
   font-size: 12px;
-  color: #127486;
+  color: var(--theme-accent,#127486);
   text-decoration: none;
 }
 .workspace-viewer:hover {
@@ -63,17 +63,17 @@
 .workspace-selection-tools button {
   min-height: 38px;
   padding: 6px;
-  border: 1px solid #bed4d7;
+  border: 1px solid var(--theme-border,#bed4d7);
   border-radius: 7px;
-  background: #fff;
-  color: #235a65;
+  background: var(--theme-surface,#fff);
+  color: var(--theme-accent,#235a65);
   font-size: 12px;
   font-weight: 700;
 }
 .workspace-selection-tools button[aria-pressed=true] {
-  background: #fff4da;
-  border-color: #dca443;
-  color: #755114;
+  background: var(--theme-warning-surface,#fff4da);
+  border-color: var(--theme-border,#dca443);
+  color: var(--theme-warning,#755114);
 }
 .workspace-scale-tools {
   display: flex;
@@ -85,8 +85,8 @@
 .workspace-scale-tools button {
   border: 0;
   border-radius: 5px;
-  background: #eef4f4;
-  color: #47646d;
+  background: var(--theme-surface,#eef4f4);
+  color: var(--theme-accent,#47646d);
   padding: 6px 8px;
   font-size: 11px;
   min-height: 30px;
@@ -97,7 +97,7 @@
 }
 .workspace-scale-tools span {
   font-size: 10px;
-  color: #59717a;
+  color: var(--theme-muted,#59717a);
   margin-left: auto;
 }
 .result-navigation {
@@ -105,21 +105,21 @@
   grid-template-columns: repeat(5,minmax(0,1fr));
   gap: 3px;
   padding: 8px 10px;
-  border-top: 1px solid #d9e3e5;
-  background: #edf5f4;
+  border-top: 1px solid var(--theme-border,#d9e3e5);
+  background: var(--theme-surface,#edf5f4);
 }
 .result-navigation button {
   border: 0;
   border-radius: 5px;
   background: transparent;
-  color: #48656c;
+  color: var(--theme-accent,#48656c);
   padding: 6px 3px;
   min-height: 36px;
   font-size: 11px;
 }
 .result-navigation button[aria-pressed=true] {
-  background: #fff;
-  color: #0c6576;
+  background: var(--theme-surface,#fff);
+  color: var(--theme-accent,#0c6576);
   box-shadow: 0 1px 5px #153e4814;
   font-weight: 700;
 }
@@ -136,7 +136,7 @@
 .workspace-help {
   margin-top: 16px;
   font-size: 12px;
-  color: #47646d;
+  color: var(--theme-accent,#47646d);
 }
 .workspace-help summary {
   cursor: pointer;
@@ -164,9 +164,9 @@
 }
 .ground-navigation button {
   flex: 1;
-  border: 1px solid #c2d7d8;
-  background: #fff;
-  color: #275961;
+  border: 1px solid var(--theme-border,#c2d7d8);
+  background: var(--theme-surface,#fff);
+  color: var(--theme-accent,#275961);
   border-radius: 6px;
   min-height: 38px;
   font-size: 13px;

@@ -2,6 +2,8 @@
 import { useEffect, useState } from "react";
 import { createRectangleSelection, type RectangleSelection } from "../lib/selection/geometry";
 
+import OfflineSupport from "./OfflineSupport";
+
 const STORAGE_KEY = "geo-graph-saved-areas-v1";
 type SavedArea = { id: string; name: string; corners: [[number, number], [number, number]] };
 
@@ -39,6 +41,7 @@ export default function AreaLibrary({ area, onOpen }: { area: RectangleSelection
     <p className="eyebrow">MULTI-COUNTRY WORKSPACE</p><h2>Saved areas</h2>
     <p>Keep areas from different countries and reopen each one for a fresh evidence check. Stored in this browser; export reports to share or back them up.</p>
     {area&&<><label htmlFor="saved-area-name">Area name</label><input id="saved-area-name" maxLength={120} value={name} placeholder="e.g. Nigeria · northern site" onChange={event=>setName(event.target.value)}/><button onClick={save}>Save selected area</button></>}
+    <OfflineSupport area={area}/>
     {!items.length&&<p>Select an area anywhere on the map to start your collection.</p>}
     {items.map(item=><div className="saved-area-row" key={item.id}><button onClick={()=>{const result=createRectangleSelection(...item.corners);if(result.ok)onOpen(result.selection);}}>{item.name}</button><button aria-label={`Remove ${item.name}`} onClick={()=>write(items.filter(saved=>saved.id!==item.id))}>Remove</button></div>)}
     {message&&<p role="status">{message}</p>}

@@ -25,3 +25,5 @@ of adding another override at the end.
 
 Third-party MapLibre and Cesium styles/assets are generated or package-owned;
 change application styles here instead of editing those files.
+
+`theme.css` owns the persistent appearance switch and dark palette. Shared UI declarations use semantic theme tokens with their original light colors as fallbacks. Keep terrain/source legend colors and scientific chart encodings independent from UI appearance.

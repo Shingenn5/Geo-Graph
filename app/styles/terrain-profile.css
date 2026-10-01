@@ -17,10 +17,10 @@
   max-width: 720px;
   margin: 0 auto;
   padding: 14px 18px;
-  border: 1px solid #a8c2c8;
+  border: 1px solid var(--theme-border,#a8c2c8);
   border-radius: 12px;
-  background: #fbfdfd;
-  color: #183b46;
+  background: var(--theme-surface,#fbfdfd);
+  color: var(--theme-accent,#183b46);
   box-shadow: 0 5px 24px #0004;
   max-height: 55%;
   overflow: auto;
@@ -40,7 +40,7 @@
 
 .profile-heading h2 small {
   font-weight: 400;
-  color: #607780;
+  color: var(--theme-muted,#607780);
   font-size: 13px;
   margin-left: 8px;
 }
@@ -51,10 +51,10 @@
 }
 
 .terrain-profile-panel button {
-  border: 1px solid #b5cdd2;
+  border: 1px solid var(--theme-border,#b5cdd2);
   border-radius: 6px;
-  background: #fff;
-  color: #126777;
+  background: var(--theme-surface,#fff);
+  color: var(--theme-accent,#126777);
   padding: 7px 10px;
   font-size: 13px;
   white-space: nowrap;
@@ -75,7 +75,7 @@
 
 .profile-stats dt {
   font-size: 12px;
-  color: #59727a;
+  color: var(--theme-muted,#59727a);
 }
 
 .profile-stats dd {
@@ -125,7 +125,7 @@
   gap: 14px;
   align-items: center;
   margin-top: 8px;
-  border-top: 1px solid #d4e1e4;
+  border-top: 1px solid var(--theme-border,#d4e1e4);
   padding-top: 8px;
 }
 
@@ -135,19 +135,19 @@
 }
 
 .profile-footer a {
-  color: #126777;
+  color: var(--theme-accent,#126777);
 }
 
 .terrain-profile-panel .profile-warning {
-  color: #82451b;
-  background: #fff3dc;
+  color: var(--theme-warning,#82451b);
+  background: var(--theme-warning-surface,#fff3dc);
   padding: 8px;
   border-radius: 5px;
 }
 
 .enhanced-viewer .camera-tools button[aria-pressed=true] {
-  background: #ffbd4a;
-  color: #132c35;
+  background: var(--theme-warning-surface,#ffbd4a);
+  color: var(--theme-text,#132c35);
 }
 
 @media (max-width:700px) {

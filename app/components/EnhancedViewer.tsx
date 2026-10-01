@@ -1,4 +1,5 @@
 "use client";
+import ThemeSwitch from "./ThemeSwitch";
 /* eslint-disable @next/next/no-html-link-for-pages -- Full navigation unloads the previous WebGL renderer and avoids prefetching the other engine. */
 
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -69,7 +70,7 @@ export default function EnhancedViewer() {
   const soilData=soil?.data?.soil;
   const firstRock=geology?.data?.units?.[0];
   return <main className={`enhanced-viewer${profile.status!=="idle"?" has-profile":""}`}>
-    <header><a className="brand" href="/">◈ GEO GRAPH<small>Terrain intelligence</small></a><span className="header-note">Enhanced 3D · trial</span><a className="viewer-trial-link" href="/">Standard viewer</a></header>
+    <header><a className="brand" href="/">◈ GEO GRAPH<small>Terrain intelligence</small></a><span className="header-note">Enhanced 3D · trial</span><ThemeSwitch/><a className="viewer-trial-link" href="/">Standard viewer</a></header>
     <div className="workspace"><aside>
       <section className="intro"><p className="eyebrow">EXPLORE THE SURFACE</p><h1>See the landscape.<br/>Understand the ground.</h1><p>Progressive terrain detail. Click the ground for mapped evidence. Existing survey and area tools remain in the standard viewer.</p></section>
       <section><label htmlFor="enhanced-search">Find a place</label><form className="search-row" onSubmit={event=>{event.preventDefault();void search();}}><input id="enhanced-search" value={query} onChange={event=>setQuery(event.target.value)} placeholder="Place or latitude, longitude"/><button disabled={!ready||searching}>{searching?"Searching…":"Go"}</button></form>{searchError&&<p role="status">{searchError}</p>}{places.map((place,index)=><button className="trial-place" key={index} onClick={()=>{scene.current?.fly(place.point[0],place.point[1],9000);setPlaces([]);}}>{place.name}</button>)}</section>

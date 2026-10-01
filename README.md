@@ -506,10 +506,43 @@ Retain attribution and observe provider terms when sharing exports/screenshots. 
 
 ## TL;DR
 
-Download and extract the repository, install Node.js 22.13+, run **Install Geo Graph.cmd**, then **Start Geo Graph.cmd**. Keep its terminal open and use `http://127.0.0.1:5173`. Start with the **Uinta Basin public-data pilot**. For a presentation, run `npm run demo:prepare`, launch **Demo Geo Graph.cmd**, then run `npm run demo:check`. Internet is required for live maps and evidence.
+Download and extract the repository, install Node.js 22.13+, run **Install Geo Graph.cmd**, then **Start Geo Graph.cmd**. Keep its terminal open and use `http://127.0.0.1:5173`. Start with the **Uinta Basin public-data pilot**. For a presentation, run `npm run demo:prepare`, launch **Demo Geo Graph.cmd**, then run `npm run demo:check`. Internet is required for first installation, new sites, satellite imagery, and fresh evidence. Small sites can be downloaded for offline use in the standard viewer (see below).
 
 ### Worldwide coverage and missing tiles
 
 Area selection and saved areas are not restricted to the United States. Global terrain and imagery reuse geographically aligned lower-resolution parent tiles when detailed tiles return missing coverage; magnifying a parent does not create new detail. The standard viewer caps elevation requests at provider level 17 and shares cached downloads with shading. Shading uses a separate lower-detail source to preserve rendering quality. Service outages remain errors, rather than being treated as missing coverage.
 
 International soil screening is a model prediction, not a borehole log. SoilGrids pH is queried at 0–5, 5–15, 15–30, 30–60, 60–100, and 100–200 cm; texture fractions are queried only at 0–5 cm. Predictions are 250 m resolution and uncertainty bounds are not yet included. Surface geology depends on Macrostrat map coverage. Public well integration currently covers Utah only; elsewhere the app explicitly identifies the missing registry integration, and local LAS files can be inspected. No product can guarantee observed subsurface data at every coordinate.
+
+
+### Install and use offline
+
+Offline downloads work on the hosted HTTPS app and the local **production/demo** server. The development server does not generate the versioned app-file list. This is an installable web app; a native Windows executable is not included.
+
+1. While online, open Geo Graph in Chrome or Edge. For the local copy, finish installation and run `npm run demo:prepare` followed by **Demo Geo Graph.cmd**.
+2. Select a small area, open **Areas**, give it a name, and choose **Save selected area**. Save areas from as many countries as needed; downloads have a shared storage budget.
+3. Expand **Offline use**. Choose **Download selected site** and leave the page open until the completion message appears. The app files are included automatically; **Download app files** alone saves the interface, not the terrain for a new site.
+4. Read the completion count. It reports responses actually retained in browser storage, including terrain tiles, and requests that were not saved. A partially available download does not establish complete geographic coverage.
+5. Use the browser's **Install Geo Graph / Install this site as an app** menu option, when available. On mobile, use the browser's Add to Home Screen option. Installation and offline support depend on browser capabilities; HTTPS or localhost is required.
+6. Disconnect, reopen the app using the same browser/profile and origin, then reopen your named site under **Areas**. Offline startup uses **Bare Earth** terrain. Results show downloaded point evidence; fresh locations can remain unavailable. Local LAS imports and exports work without uploading the file.
+
+**What is downloaded:** versioned app JavaScript, styles, map renderer workers, and terrain/geology tiles for the selected area with a surrounding tile margin. Elevation covers provider zoom levels 0–14; closer views reuse geographically aligned parent tiles rather than inventing detail. Evidence is downloaded at the area's center and four inset corners. The center also requests the current supported wells integration and source metadata. Records remain subject to actual provider coverage; selecting a country does not create its missing well registry.
+
+**What still needs internet:** satellite/aerial/topographic imagery, new searches and areas, finer elevation, unvisited point evidence, optional layers not included in the site pack, and the enhanced Cesium viewer. Satellite imagery is excluded from bulk offline packs; provider offline-export permissions are a separate requirement. The standard viewer supports offline terrain and evidence snapshots, not an offline copy of every data source.
+
+**Storage and updates:** public geographic responses share a 128 MB / 1,200-response budget. Older responses are evicted when it fills, so an older pack can become incomplete. The browser may also evict storage; private browsing, clearing site data, or switching profiles can remove downloads. The cache is not an archival backup. Export important reports, preserve local LAS files, and re-download/check a site before leaving connectivity. Downloads do not move between the hosted app and localhost or into the repository ZIP.
+
+App files update through a versioned service worker; older app-file caches are removed after a successful installation while geographic downloads are retained. Geographic tiles are reused for up to seven days online. Evidence attempts a live check online, and only a connection failure (or the browser reporting offline) permits a saved snapshot. Live HTTP source failures remain failures. Offline area exports retain the saved response date and snapshot marker; export-generation time is not evidence freshness.
+
+### Terrain performance target
+
+The target is usable terrain within two seconds, including the map, rather than merely a fast sidebar. The standard viewer starts loading its renderer early, connects to tile hosts in advance, requests fewer distant terrain tiles, loads contour generation only when enabled, and avoids resetting terrain when unrelated overlays change. Parent-tile processing is shared and cached with byte limits; worker transfers cannot detach the cached buffer.
+
+Local timing diagnostics are available in `window.geoGraphMetrics.snapshot()` and named `data-gg-*` attributes on the page root. `terrain-visible` measures from navigation until the initial terrain source and imagery are loaded and a center elevation can be sampled. Offline startup omits the satellite requirement. These are local diagnostics, not transmitted telemetry, and do not establish complete tile coverage or full-resolution refinement.
+
+A cached local Grand Canyon visit measured **0.60 seconds** after this pass (previous instrumented baseline: **0.53 seconds**). This confirms repeat-visit behavior under the tested conditions, not a speed improvement over that sample or a guarantee for cold downloads. A cached Nigeria return measured 0.52–0.58 seconds; an earlier visit took 2.54 seconds, so the target is not met on every run. A universal two-second cold start is not verified: connection speed, device GPU, provider response times, camera position, and requested detail still matter. Offline site downloads remove much of the network dependence for prepared sites.
+
+
+### Light and dark appearance
+
+Use the **Dark / Light** switch beside the Geo Graph heading. Your choice is saved in this browser, restored before the page hydrates, and shared between the standard and enhanced viewers. It also works offline. Appearance changes dashboard colors and controls; terrain, imagery, geology colors, and scientific chart meanings retain their source meaning. If browser storage is disabled, the switch still works for the current page.

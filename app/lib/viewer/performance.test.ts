@@ -36,3 +36,15 @@ test("cached geographic coverage survives camera changes but rejects unrelated o
   assert.equal(hasLayerCoverage(["geology","topo"],center,16.2,evidence,()=>true),false);
   assert.equal(hasLayerCoverage(["satellite"],center,18,evidence,()=>true),false);
 });
+
+
+test("offline evidence retains saved date and is not cached as fresh data", async () => {
+  const original = globalThis.fetch;
+  globalThis.fetch = async () => Response.json({units: []}, {headers: {"cache-control": "no-store", "x-geograph-offline": "true", "x-geograph-saved-at": "2026-10-01T00:00:00Z"}});
+  try {
+    const cache = new BoundedCache<unknown>();
+    const data = await cachedJson<{units: unknown[]}>(cache, "/api/geology", new AbortController().signal);
+    assert.equal(data.offlineSnapshot?.savedAt, "2026-10-01T00:00:00Z");
+    assert.equal(cache.size, 0);
+  } finally {globalThis.fetch = original;}
+});

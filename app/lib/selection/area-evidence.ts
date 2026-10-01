@@ -9,6 +9,7 @@ export type PointLookup<T = unknown> = {
   status: "available" | "no-record" | "unavailable";
   source: string;
   retrievedAt?: string;
+  offlineSnapshot?: { savedAt: string | null };
   href?: string;
   data?: T;
   error?: string;
