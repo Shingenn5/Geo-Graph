@@ -109,6 +109,7 @@ export default function GeoExplorer(){
     });
   }
   function viewResults(){
+    setResultSection("overview");
     changePanel("results");
     // Reveal the panel before focusing it, including when results sit below the map.
     requestAnimationFrame(()=>{
@@ -675,6 +676,13 @@ export default function GeoExplorer(){
   ];
   const areaSoilNames=areaEvidence?[...new Set(areaEvidence.samples.map(sample=>(sample.soil.data as Soil|undefined)?.mapUnitName).filter((name):name is string=>Boolean(name)))]:[];
   const areaGeologyNames=areaEvidence?[...new Set(areaEvidence.samples.flatMap(sample=>(sample.geology.data as GeologyResult|undefined)?.units.map(unit=>unit.name).filter(Boolean)??[]))]:[];
+  const areaEvidenceSummary=areaEvidence&&<div className="area-evidence">
+          <strong>Five-point evidence check</strong>
+          <p>Soil: {areaEvidence.aggregate.soil.available} with data · {areaEvidence.aggregate.soil.noRecord} without a record · {areaEvidence.aggregate.soil.unavailable} unavailable</p>
+          <p>Geology: {areaEvidence.aggregate.geology.available} mapped · {areaEvidence.aggregate.geology.noRecord} without a record · {areaEvidence.aggregate.geology.unavailable} unavailable</p>
+          <p>Soil sources / units at sampled points: {areaSoilNames.join(" · ")||"none returned"}</p>
+          <p>Mapped rock units at sampled points: {areaGeologyNames.join(" · ")||"none returned"}</p>
+        </div>;
   const surfaceHorizon=soil?.horizons?.[0];
   const useCaseFacts:Record<UseCase,Array<[string,string]>>={
     Overview:[["Map unit",soil?`${soil.mapUnitSymbol} · ${soil.mapUnitName}`:"—"],["Dominant component",soil?.componentName||"—"],["Representative slope",soil?.slopePercent!=null?`${soil.slopePercent}%`:"—"],["Drainage",soil?.drainageClass||"—"]],
@@ -736,6 +744,9 @@ export default function GeoExplorer(){
         {(point||area)&&<section className="results-overview">
           <div className="section-heading"><div><p className="eyebrow">SELECTED EVIDENCE</p><h2>{area?"Area survey":activeCase.title}</h2></div><button className="mini-export" onClick={clearSelection}>Clear selection</button></div>
           <p className="results-location">{point?`${point[1].toFixed(5)}, ${point[0].toFixed(5)}`:area?`${area.area.hectares.toLocaleString(undefined,{maximumFractionDigits:2})} hectares · five sample positions`:""}</p>
+          {area&&<>{areaEvidenceError&&<p role="alert" className="error">{areaEvidenceError}</p>}{areaEvidenceSummary}<p className="interpretation-note">Center and inset-corner samples only; conditions may vary between them. Soil predictions and surface geology do not establish underground layers or drilling suitability.</p></>}
+          {point&&<article className="data-card"><h3>Surface geology</h3>{loading?<p role="status">Reading mapped geology…</p>:error?<p role="alert" className="error">{error}</p>:<p>{unit?.name||"No published rock units returned at this point."}</p>}{unit?.lith&&<p>{unit.lith.replace(/[{}]/g," ")}</p>}</article>}
+          <div className="workspace-tools" aria-label="Review selected evidence"><button onClick={()=>{setGroundKind("geology");changeResultSection("ground");}}>Ground details</button>{point&&<button onClick={()=>changeResultSection("wells")}>Nearby wells</button>}<button onClick={()=>changeResultSection("depth")}>Logs &amp; depth</button><button onClick={()=>changeResultSection("sources")}>Sources</button></div>
           <div className="survey-export-actions">{point?<><button className="export-button" onClick={()=>exportSurvey("html")}>⇩ Printable survey</button><button onClick={()=>exportSurvey("geojson")}>GeoJSON</button><button onClick={()=>exportSurvey("json")}>JSON</button>{soil&&<button onClick={exportSoilReport}>Soil profile</button>}</>:<button className="export-button" onClick={exportArea}>⇩ Area GeoJSON</button>}</div>
           {point&&<><div className="kpi-grid">{kpis.map(kpi=><div className={`kpi-card ${kpi.tone}`} key={kpi.label}><span>{kpi.label}</span><strong>{kpi.value}</strong></div>)}</div><dl className="use-case-facts">{useCaseFacts[useCase].map(([label,value])=><div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl></>}
           {(soilLoading||loading||wellsLoading||provenanceLoading||areaEvidenceLoading)&&<p className="export-progress" role="status">Evidence is still loading. Exports include only what is available now.</p>}
@@ -752,13 +763,7 @@ export default function GeoExplorer(){
         <p>WGS84 rectangle between {area.bbox.south.toFixed(5)}° and {area.bbox.north.toFixed(5)}° latitude. Area follows parallels and meridians on the WGS84 ellipsoid.</p>
         {areaEvidenceLoading&&<p role="status">Checking five positions in soil and geology maps…</p>}
         {areaEvidenceError&&<p role="alert" className="error">{areaEvidenceError}</p>}
-        {areaEvidence&&<div className="area-evidence">
-          <strong>Five-point evidence check</strong>
-          <p>Soil: {areaEvidence.aggregate.soil.available} with data · {areaEvidence.aggregate.soil.noRecord} without a record · {areaEvidence.aggregate.soil.unavailable} unavailable</p>
-          <p>Geology: {areaEvidence.aggregate.geology.available} mapped · {areaEvidence.aggregate.geology.noRecord} without a record · {areaEvidence.aggregate.geology.unavailable} unavailable</p>
-          <p>Soil sources / units at sampled points: {areaSoilNames.join(" · ")||"none returned"}</p>
-          <p>Mapped rock units at sampled points: {areaGeologyNames.join(" · ")||"none returned"}</p>
-        </div>}
+        {areaEvidenceSummary}
         <p>These are center and inset-corner point samples, not full polygon coverage. International soil results are SoilGrids 250 m predictions to 2 m; they do not establish underground layers or drilling suitability. Soil and geology may vary between samples.</p>
         <button className="area-export" onClick={exportArea}>⇩ Export area GeoJSON</button>
       </>}
